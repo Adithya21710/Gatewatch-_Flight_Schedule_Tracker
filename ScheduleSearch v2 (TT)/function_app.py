@@ -136,27 +136,37 @@ def dictcheck():
 
         new_freq=len(all_flights)
 
+        entities2=table_client2.list_entities()
+
         if freq!=new_freq:
             entity["FREQ"]=new_freq
             table_client.update_entity(entity)
-            for flight in all_flights:
-                segment = flight["flights"][0]
-            
-                airline=segment["airline"]
-                airline_logo=flight.get("airline_logo", "")
-                airplane=segment["airplane"]
-                rk2=segment["flight_number"]
-            
-                dep2=segment["departure_airport"]["time"]
-                arr2=segment["arrival_airport"]["time"]
-            new_entity={["PartitionKey"]=,
-                        ["RowKey"]=,
-                        ["AIRLINE"]=,
-                        ["AIRCRAFT"]=,
-                        ["DEPT"]=,
-                        ["ARRT"]=,
-                        ["AIRLINE_LOGO"]=}
             emailfreq(dep,arr,freq,new_freq,date1)
+
+        old_rows = {}
+        for entity3 in table_client2.query_entities(f"PartitionKey eq '{rk1}'"):
+            old_rows[entity3["RowKey"]] = entity3
+
+        new_rows={}
+        for flight in all_flights:
+            legs = flight.get("flights", [])
+            if not legs:
+                continue
+            segment = legs[0]
+
+        flight_number = segment.get("flight_number", "").replace(" ", "")
+        if not flight_number:
+            continue
+
+        new_rows[flight_number] = {
+            "PartitionKey": rk1,
+            "RowKey": flight_number,
+            "AIRLINE": segment.get("airline", ""),
+            "AIRCRAFT": segment.get("airplane", ""),
+            "DEPT": segment.get("departure_airport", {}).get("time", ""),
+            "ARRT": segment.get("arrival_airport", {}).get("time", ""),
+            "AIRLINE_LOGO": flight.get("airline_logo", ""),
+        }
 
         cheapest = min(all_flights, key=lambda f: f.get("price", float("inf")), default=None)
         cheapest_price2 = cheapest.get("price")
