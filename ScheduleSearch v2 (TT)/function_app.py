@@ -17,7 +17,6 @@ endpoint=os.environ["ACS_ENDPOINT"]
 client = EmailClient(endpoint,credential)
 
 
-
 app = func.FunctionApp()
 
 

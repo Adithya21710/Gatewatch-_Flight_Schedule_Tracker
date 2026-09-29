@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GATEWATCH — Flight Frequency Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1B1E20;
+    --panel: #24282B;
+    --tile: #101418;
+    --hairline: #33383B;
+    --amber: #F2A93B;
+    --amber-dim: #8A6626;
+    --teal: #4FD1A5;
+    --red: #E1554F;
+    --text: #E8E6E1;
+    --text-dim: #8B9094;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 0 0 64px;
+  }
+
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Hero / gradient band ---------- */
+  .hero {
+    background-color: #0A0A0B;
+    background-image:
+      radial-gradient(ellipse 75% 100% at 108% -25%, rgba(255, 176, 74, 0.55) 0%, rgba(255, 176, 74, 0.28) 30%, transparent 60%),
+      radial-gradient(ellipse 60% 75% at 96% 15%, rgba(168, 196, 74, 0.32) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 42px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 42px);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 65%, transparent 100%);
+            mask-image: linear-gradient(180deg, #000 0%, #000 65%, transparent 100%);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--hairline);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 28px 24px 22px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    margin: 0;
+    text-shadow: 0 0 20px rgba(242, 169, 59, 0.35);
+  }
+
+  .tagline {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--teal);
+    border: 1px solid rgba(79, 209, 165, 0.35);
+    background: rgba(79, 209, 165, 0.08);
+    padding: 5px 10px;
+    border-radius: 3px;
+  }
+
+  .status-pill::before {
+    content: "●";
+    margin-right: 6px;
+    font-size: 8px;
+  }
+
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- Toggle button ---------- */
+  .toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 28px;
+  }
+
+  #toggle-add {
+    background: transparent;
+    color: var(--amber);
+    border: 1px solid var(--amber-dim);
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  #toggle-add:hover {
+    background: rgba(242, 169, 59, 0.08);
+    border-color: var(--amber);
+  }
+
+  #toggle-add[aria-expanded="true"] {
+    background: rgba(242, 169, 59, 0.12);
+    border-color: var(--amber);
+  }
+
+  /* ---------- Access code field (used inside the modal) ---------- */
+  .access-code-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .access-code-field label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-weight: 500;
+  }
+
+  .access-code-field input {
+    background: var(--tile);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    padding: 10px 12px;
+    width: 100%;
+    transition: border-color 0.15s ease;
+  }
+
+  .access-code-field input::placeholder { color: #4A5054; letter-spacing: 0.02em; }
+
+  .access-code-field input.invalid {
+    border-color: var(--red);
+    animation: shake 0.3s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .access-code-field input.invalid { animation: none; }
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 9, 10, 0.72);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 380px;
+    padding: 22px 24px 24px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+    transform: scale(0.94) translateY(10px);
+    opacity: 0;
+    transition: transform 0.22s ease, opacity 0.22s ease;
+  }
+
+  .modal-overlay.open .modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal-overlay, .modal { transition: none; }
+  }
+
+  .modal-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  .modal-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    color: var(--amber);
+  }
+
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  .modal-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 2px 0 18px;
+  }
+
+  #add-route {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #add-route .field-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  #add-route .field { flex: 1; }
+
+  #add-route .field input { width: 100%; }
+
+  #add-route button#track-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-weight: 500;
+  }
+
+  .field input {
+    background: var(--tile);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    padding: 10px 12px;
+    width: 110px;
+  }
+
+  .field input::placeholder { color: #4A5054; }
+
+  .field input.invalid {
+    border-color: var(--red);
+    animation: shake 0.3s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field input.invalid { animation: none; }
+  }
+
+  .field input[type="date"] {
+    color-scheme: dark;
+  }
+
+  #dep, #arr {
+    text-transform: uppercase;
+  }
+
+  button#track-btn {
+    background: var(--amber);
+    color: #1B1E20;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+
+  button#track-btn:hover { filter: brightness(1.08); }
+  button#track-btn:active { transform: translateY(1px); }
+
+  .modal-done-btn {
+    background: var(--amber);
+    color: #1B1E20;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+
+  .modal-done-btn:hover { filter: brightness(1.08); }
+  .modal-done-btn:active { transform: translateY(1px); }
+
+  .form-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  /* ---------- Success modal / airplane animation ---------- */
+  .plane-stage {
+    position: relative;
+    height: 76px;
+    margin-bottom: 6px;
+  }
+
+  .flight-line {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .flight-line path {
+    fill: none;
+    stroke: var(--hairline);
+    stroke-width: 2;
+    stroke-dasharray: 3 7;
+    stroke-linecap: round;
+  }
+
+  .plane-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 26px;
+    height: 26px;
+    color: var(--amber);
+    filter: drop-shadow(0 0 6px rgba(242, 169, 59, 0.55));
+    offset-path: path("M10,66 C 90,4 230,4 320,34");
+    offset-rotate: auto 90deg;
+    opacity: 0;
+  }
+
+  .plane-icon.flying {
+    animation: fly-across 1.3s cubic-bezier(0.45, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes fly-across {
+    0%   { offset-distance: 0%;   opacity: 0; transform: scale(0.7); }
+    8%   { opacity: 1; transform: scale(1); }
+    100% { offset-distance: 100%; opacity: 1; transform: scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .plane-stage { display: none; }
+  }
+
+  .success-check {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: rgba(79, 209, 165, 0.14);
+    border: 1px solid var(--teal);
+    color: var(--teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .success-check.show { opacity: 1; transform: scale(1); }
+
+  .success-title {
+    text-align: center;
+    font-family: var(--sans);
+    color: var(--text-dim);
+    font-size: 13px;
+    margin: 0 0 4px;
+  }
+
+  .success-route {
+    text-align: center;
+    font-family: var(--mono);
+    color: var(--amber);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin: 0 0 22px;
+  }
+
+  /* ---------- Delete confirmation modal ---------- */
+  .delete-route-preview {
+    font-family: var(--mono);
+    text-align: center;
+    color: var(--text);
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    background: var(--tile);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn-cancel {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--text-dim);
+    border-radius: 4px;
+    padding: 11px 16px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-cancel:hover { border-color: var(--text-dim); color: var(--text); }
+
+  .btn-danger {
+    flex: 1;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 11px 16px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+
+  .btn-danger:hover { filter: brightness(1.1); }
+  .btn-danger:active { transform: translateY(1px); }
+
+  /* ---------- Board ---------- */
+  .board-heading {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--text-dim);
+    margin: 34px 0 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .board {
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .route-card {
+    background: var(--tile);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .route-card:last-child { border-bottom: none; }
+
+  .route-summary {
+    display: grid;
+    grid-template-columns: 1fr 64px 1fr 140px 180px 40px;
+    align-items: center;
+    min-height: 150px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .route-summary:hover { background: #15191C; }
+
+  .airport-photo {
+    position: relative;
+    height: 112px;
+    margin: 12px;
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    overflow: hidden;
+    background: #171B1D;
+  }
+
+  .airport-photo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    filter: saturate(0.8) contrast(1.03);
+  }
+
+  .airport-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.76));
+  }
+
+  .airport-label {
+    position: absolute;
+    z-index: 1;
+    left: 12px;
+    right: 12px;
+    bottom: 9px;
+    color: var(--text);
+  }
+
+  .airport-code {
+    display: block;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--amber);
+    letter-spacing: 0.08em;
+  }
+
+  .airport-name {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--sans);
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--text);
+  }
+
+  .route-arrow {
+    text-align: center;
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 20px;
+  }
+
+  .route-meta {
+    padding: 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .meta-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .meta-line strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .meta-label {
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .route-stat {
+    padding: 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-family: var(--mono);
+  }
+
+  .route-stat strong {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .route-stat-sub {
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .expand-btn {
+    width: 28px;
+    height: 28px;
+    margin-right: 10px;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--amber);
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .route-card.open .expand-btn {
+    transform: rotate(180deg);
+    border-color: var(--amber-dim);
+  }
+
+  .route-details {
+    display: none;
+    padding: 0 14px 18px;
+    border-top: 1px solid var(--hairline);
+    background: #15191C;
+  }
+
+  .route-card.open .route-details { display: block; }
+
+  .details-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0 10px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .details-price {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    letter-spacing: normal;
+  }
+
+  .details-price img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 4px;
+    padding: 4px;
+  }
+
+  .details-price-label {
+    display: block;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .details-price strong {
+    display: inline-block;
+    color: var(--teal);
+    font-family: var(--mono);
+    font-size: 15px;
+    margin-right: 7px;
+  }
+
+  .details-price small {
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-size: 9px;
+  }
+
+
+  .flight-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .flight-card {
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    background: var(--tile);
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .flight-top {
+    display: grid;
+    grid-template-columns: 180px 110px 1fr;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .flight-airline {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+
+  .flight-airline img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 4px;
+    padding: 3px;
+    flex: 0 0 auto;
+  }
+
+  .flight-airline-text {
+    min-width: 0;
+  }
+
+  .flight-airline-name {
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .flight-number {
+    font-family: var(--mono);
+    color: var(--amber);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  .aircraft {
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  /* ---------- 24-hour sky bar + flight journey ---------- */
+  .timeline {
+    position: relative;
+    height: 164px;
+    margin-top: 0;
+    overflow: visible;
+    min-width: 430px;
+  }
+
+  .flight-path-wrap {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+  }
+
+  /* The sky is ALWAYS the complete 24-hour day. It does not shrink to the
+     flight duration. The flight is drawn independently above it. */
+  /* Dedicated row 4: full 24-hour sky bar. */
+  .flight-path-rail {
+    position: absolute;
+    left: 0; right: 0;
+    top: 82px;
+    height: 20px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #252833;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+
+  .sky-gradient {
+    position: absolute;
+    inset: 0;
+    /* 00–05 night, 05–07 dawn, 07–17 day, 17–19 dusk, 19–24 night */
+    background: linear-gradient(90deg,
+      #252833 0%,
+      #292c36 18%,
+      #39404d 22%,
+      #7c735e 25%,
+      #d0a85a 29%,
+      #e0b45d 33%,
+      #e0b45d 68%,
+      #d0a85a 71%,
+      #7c735e 75%,
+      #39404d 78%,
+      #292c36 82%,
+      #252833 100%
+    );
+  }
+
+  /* Small atmosphere layer makes the transition feel continuous rather than
+     like hard DAY/NIGHT blocks. */
+  .sky-gradient::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,190,90,.06) 24%,
+      rgba(255,205,100,.10) 32%,
+      rgba(255,205,100,.10) 68%,
+      rgba(255,190,90,.06) 76%,
+      transparent 84%
+    );
+  }
+
+  .flight-journey {
+    position: absolute;
+    top: 0;
+    height: 64px;
+    z-index: 8;
+    pointer-events: none;
+  }
+
+  /* Each journey element gets its own visual row:
+     time → duration → aircraft/dotted route → sky bar. */
+  .flight-journey-line {
+    position: absolute;
+    top: 54px;
+    left: 0;
+    width: 100%;
+    border-top: 2px dotted rgba(232,230,225,.55);
+  }
+
+  .flight-journey-line::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    width: 7px;
+    height: 7px;
+    border-top: 2px solid rgba(232,230,225,.65);
+    border-right: 2px solid rgba(232,230,225,.65);
+    transform: rotate(45deg);
+  }
+
+  .flight-journey-segment {
+    position: absolute;
+    top: 54px;
+    border-top: 2px dotted rgba(232,230,225,.55);
+  }
+
+  .flight-air-icon {
+    position: absolute;
+    top: 38px;
+    transform: translateX(-50%);
+    z-index: 10;
+    color: #d9dde2;
+    font-size: 21px;
+    line-height: 1;
+    text-shadow: 0 1px 7px rgba(0,0,0,.6);
+  }
+
+  .flight-air-icon.takeoff { transform: translateX(-50%) rotate(-18deg); }
+  .flight-air-icon.landing { transform: translateX(-50%) rotate(18deg); }
+
+  /* Dedicated row 1: departure/arrival times. */
+  .flight-end-label {
+    position: absolute;
+    top: 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    z-index: 11;
+    max-width: 76px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .flight-end-label.departure {
+    transform: translateX(-100%);
+    text-align: right;
+    margin-left: -7px;
+  }
+
+  .flight-end-label.arrival {
+    transform: translateX(0);
+    text-align: left;
+    margin-left: 7px;
+  }
+
+  .flight-end-label.next-day { color: var(--teal); }
+
+  /* Dedicated row 5: local airport time zones. */
+  .flight-timezone {
+    position: absolute;
+    top: 111px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 11px;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    z-index: 8;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .flight-timezone.departure {
+    transform: translateX(-100%);
+    text-align: right;
+    margin-left: -5px;
+  }
+
+  .flight-timezone.arrival {
+    transform: translateX(0);
+    text-align: left;
+    margin-left: 5px;
+  }
+
+  /* Never let the two endpoint timezone labels occupy the same visual row
+     when the flight is short. */
+  .flight-timezone {
+    line-height: 12px;
+  }
+
+  /* Dedicated row 2: duration. */
+  .flight-duration {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 11;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 9px;
+    white-space: nowrap;
+    background: var(--tile);
+    padding: 0 6px;
+  }
+
+  .flight-sky-icon {
+    position: absolute;
+    top: 61px;
+    transform: translateX(-50%);
+    z-index: 7;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .flight-sky-icon.sun {
+    color: #F2C14E;
+    text-shadow: 0 0 7px rgba(242,193,78,.35);
+  }
+
+  .flight-sky-icon.moon {
+    color: #B9C0D0;
+  }
+
+  /* Dedicated row 6: 24-hour labels. */
+  .sky-tick {
+    position: absolute;
+    top: 128px;
+    transform: translateX(-50%);
+    color: var(--text-dim);
+    font: 8px var(--mono);
+    z-index: 7;
+  }
+
+  .flight-marker {
+    position: absolute;
+    top: 76px;
+    height: 31px;
+    width: 2px;
+    background: var(--teal);
+    box-shadow: 0 0 7px rgba(79,209,165,.3);
+    z-index: 6;
+  }
+
+  .flight-marker::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border: 2px solid var(--teal);
+    border-radius: 50%;
+    background: var(--tile);
+    top: -5px;
+  }
+
+  .day-night-legend {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 2px;
+    color: var(--text-dim);
+    font-size: 9px;
+    font-family: var(--mono);
+  }
+
+  .day-night-legend span::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 7px;
+    border-radius: 2px;
+    margin-right: 4px;
+  }
+
+  .day-night-legend .day::before {
+    background: linear-gradient(90deg,#b58b43,#e0b45d);
+  }
+
+  .day-night-legend .night::before {
+    background: #292c36;
+  }
+
+  .loading-flights,
+  .no-flights {
+    padding: 18px;
+    text-align: center;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    border: 1px dashed var(--hairline);
+    border-radius: 5px;
+  }
+
+  .row-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 12px 0 0 !important;
+  }
+
+  .delete-btn {
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--red);
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .delete-btn:hover {
+    background: rgba(225, 85, 79, 0.1);
+    border-color: var(--red);
+  }
+
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    display: none;
+  }
+
+  .empty-state strong {
+    display: block;
+    color: var(--text);
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  @keyframes flip-in {
+    from { opacity: 0; transform: scaleY(0.4); filter: blur(2px); }
+    to   { opacity: 1; transform: scaleY(1); filter: blur(0); }
+  }
+
+  .route-card {
+    animation: flip-in 0.5s ease backwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .route-card { animation: none; }
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 760px) {
+    .route-summary {
+      grid-template-columns: 1fr 36px 1fr;
+      min-height: 0;
+    }
+
+    .airport-photo {
+      height: 120px;
+      margin: 10px 6px;
+    }
+
+    .route-arrow { font-size: 17px; }
+
+    .route-meta,
+    .route-stat {
+      grid-column: 1 / -1;
+      padding: 8px 14px;
+    }
+
+    .route-meta {
+      flex-direction: row;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--hairline);
+    }
+
+    .cheapest {
+      border-top: 1px solid var(--hairline);
+    }
+
+    .expand-btn {
+      position: absolute;
+      right: 6px;
+      top: 8px;
+    }
+
+    .route-summary { position: relative; }
+
+    .flight-top {
+      grid-template-columns: 1fr;
+      gap: 7px;
+    }
+
+    .timeline { min-width: 190px; height: 164px; }
+
+    .airport-name { font-size: 10px; }
+  }
+
+  @media (max-width: 620px) {
+    .hero { padding: 0 4px; }
+
+    header {
+      padding: 20px 16px 18px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    h1 { font-size: 21px; letter-spacing: 0.08em; }
+    .tagline { font-size: 12px; }
+
+    main { padding: 0 16px; }
+
+    .toolbar { margin-top: 20px; }
+    #toggle-add { width: 100%; padding: 12px 16px; font-size: 14px; }
+
+    .modal { padding: 20px; }
+    #add-route .field-row { flex-direction: column; gap: 14px; }
+
+    .board-heading { margin: 26px 0 8px; }
+
+    .airport-photo {
+      height: 100px;
+      margin: 8px 4px;
+    }
+
+    .airport-code { font-size: 15px; }
+    .airport-name { font-size: 9px; }
+  }
+
+  /* ---------- Small phones ---------- */
+  @media (max-width: 380px) {
+    h1 { font-size: 18px; }
+    .status-pill { font-size: 10px; padding: 4px 8px; }
+    .airport-code { font-size: 14px; }
+    .airport-name { font-size: 8px; }
+    .timeline-hours { font-size: 7px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <header>
+    <div class="brand">
+      <h1>GATEWATCH INDIA</h1>
+      <span class="tagline">Flight frequency tracker</span>
+    </div>
+    <span class="status-pill">Board live</span>
+  </header>
+</div>
+
+<main>
+
+  <div class="toolbar">
+    <button type="button" id="toggle-add">+ Track new route</button>
+  </div>
+
+  <div class="modal-overlay" id="add-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+      <div class="modal-title-row">
+        <span class="modal-title" id="add-modal-title">ADD ROUTE</span>
+        <button type="button" class="modal-close" id="add-modal-close" aria-label="Close">×</button>
+      </div>
+      <p class="modal-sub">Frequency is looked up live and saved with the route.</p>
+      <form id="add-route">
+        <div class="field-row">
+          <div class="field">
+            <label for="dep">Departure</label>
+            <input type="text" id="dep" maxlength="3" placeholder="DEL">
+          </div>
+          <div class="field">
+            <label for="arr">Arrival</label>
+            <input type="text" id="arr" maxlength="3" placeholder="BOM">
+          </div>
+        </div>
+        <div class="field">
+          <label for="flight-date">Date</label>
+          <input type="date" id="flight-date">
+        </div>
+        <div class="access-code-field">
+          <label for="access-code">Access code</label>
+          <input type="password" id="access-code" placeholder="required to add/delete" autocomplete="off">
+        </div>
+        <button type="submit" id="track-btn">Track route</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="success-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="success-modal-title">
+      <div class="plane-stage">
+        <svg class="flight-line" viewBox="0 0 332 76" preserveAspectRatio="none">
+          <path d="M10,66 C 90,4 230,4 320,34" />
+        </svg>
+        <svg class="plane-icon" id="plane-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2.5 1.5V22l4-1 4 1v-1.5L13 19v-5.5l8 2.5z"/>
+        </svg>
+      </div>
+      <div class="success-check" id="success-check">✓</div>
+      <p class="success-title" id="success-modal-title">Route tracked</p>
+      <p class="success-route" id="success-route-text">DEL → BLR</p>
+      <button type="button" id="success-done-btn" class="modal-done-btn" style="width:100%">Done</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="delete-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+      <div class="modal-title-row">
+        <span class="modal-title" id="delete-modal-title" style="color: var(--red)">REMOVE ROUTE</span>
+        <button type="button" class="modal-close" id="delete-modal-close" aria-label="Close">×</button>
+      </div>
+      <p class="modal-sub">Enter your access code to confirm removal.</p>
+      <div class="delete-route-preview" id="delete-route-preview">DEL → BLR · 2026-08-15</div>
+      <div class="access-code-field">
+        <label for="delete-access-code">Access code</label>
+        <input type="password" id="delete-access-code" placeholder="required to delete" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="delete-cancel-btn">Cancel</button>
+        <button type="button" class="btn-danger" id="delete-confirm-btn">Remove route</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="board-heading">
+    <span>TRACKED ROUTES</span>
+    <span id="route-count">3</span>
+  </div>
+
+  <div class="board" id="board">
+    <!-- Route cards are populated from /api/fetch_route -->
+  </div>
+
+  <div class="empty-state" id="empty-state">
+    <strong>No routes tracked</strong>
+    Add a departure, arrival and date above to start watching a route.
+  </div>
+
+</main>
+
+<script>
+  // ---------------------------------------------------------------------
+  // API wiring:
+  //   /api/fetch_route    -> loads all MasterTable rows on page load.
+  //   /api/fetch_flight   -> loads AirlineDetails rows when a route opens.
+  //   /api/add_route      -> creates a tracked route.
+  //   /api/delete_route   -> removes a tracked route and its flight rows.
+  //   The access code is sent only for add/delete requests.
+  // ---------------------------------------------------------------------
+
+  const board = document.getElementById('board');
+  const routeCount = document.getElementById('route-count');
+  const emptyState = document.getElementById('empty-state');
+  const accessCodeInput = document.getElementById('access-code');
+
+  // Reads the code fresh at the moment of each request — nothing is
+  // stored beyond what's sitting in the relevant input, and it's
+  // cleared the moment the page is reloaded or closed.
+  function validateAccessCode(input) {
+    const value = input.value.trim();
+    if (!value) {
+      input.classList.add('invalid');
+      input.focus();
+      setTimeout(() => input.classList.remove('invalid'), 300);
+      return null;
+    }
+    return value;
+  }
+
+
+  // ================================================================
+  // BACKEND API CONFIGURATION — EDIT THIS WHEN CONNECTING YOUR BACKEND
+  // ================================================================
+  // Replace the URL below with your deployed Azure Function API base URL.
+  // Example: https://<your-function-app>.azurewebsites.net/api
+  // All fetch calls below use this API_BASE value.
+  const API_BASE = "https://schedulesearch-v2-eqbfawfmdkdjbucq.centralindia-01.azurewebsites.net/api";
+
+  // Common IATA names used as an overlay. If a code is not in this list,
+  // the airport code itself is used as the fallback label.
+  const airportNames = {
+    DEL: "Indira Gandhi International",
+    BOM: "Chhatrapati Shivaji Maharaj International",
+    BLR: "Kempegowda International",
+    HYD: "Rajiv Gandhi International",
+    MAA: "Chennai International",
+    CCU: "Netaji Subhas Chandra Bose International",
+    COK: "Cochin International",
+    GOI: "Goa International",
+    AMD: "Sardar Vallabhbhai Patel International",
+    PNQ: "Pune International",
+    LHR: "Heathrow",
+    LGW: "Gatwick",
+    DXB: "Dubai International",
+    SIN: "Singapore Changi",
+    DOH: "Hamad International",
+    FRA: "Frankfurt"
+  };
+
+  // Display the timezone used by the airport for the flight's local schedule.
+  // These labels are intentionally shown as LOCAL TIME so users don't confuse
+  // departure/arrival clock times when crossing time zones.
+  const airportTimezones = {
+    DEL: "IST · UTC+5:30",
+    BOM: "IST · UTC+5:30",
+    BLR: "IST · UTC+5:30",
+    HYD: "IST · UTC+5:30",
+    MAA: "IST · UTC+5:30",
+    CCU: "IST · UTC+5:30",
+    COK: "IST · UTC+5:30",
+    GOI: "IST · UTC+5:30",
+    AMD: "IST · UTC+5:30",
+    PNQ: "IST · UTC+5:30",
+    LHR: "BST · UTC+1",
+    LGW: "BST · UTC+1",
+    DXB: "GST · UTC+4",
+    SIN: "SGT · UTC+8",
+    DOH: "AST · UTC+3",
+    FRA: "CEST · UTC+2"
+  };
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function airportName(code) {
+    return airportNames[String(code || "").toUpperCase()] || String(code || "Airport");
+  }
+
+  function airportTimezone(code) {
+    return airportTimezones[String(code || "").toUpperCase()] || "LOCAL TIME";
+  }
+
+  function formatPrice(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "—";
+    return "₹" + n.toLocaleString("en-IN");
+  }
+
+  function formatTime(value) {
+    if (!value) return "—";
+    const match = String(value).match(/(?:T|\s)(\d{2}):(\d{2})/);
+    if (match) return `${match[1]}:${match[2]}`;
+    return String(value).slice(-5);
+  }
+
+  function minutesFromTime(value) {
+    const time = formatTime(value);
+    const match = time.match(/^(\d{2}):(\d{2})$/);
+    if (!match) return null;
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  function timePercent(minutes) {
+    return (minutes / 1440) * 100;
+  }
+
+  function durationText(dep, arr) {
+    let mins = arr - dep;
+    if (mins < 0) mins += 1440;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h}h ${String(m).padStart(2, '0')}m`;
+  }
+
+  function clockAtElapsed(dep, elapsed) {
+    return (dep + elapsed) % 1440;
+  }
+
+  function buildSkyTimeline() {
+    // Full 24-hour sky. These positions are intentionally independent of the
+    // flight duration so every flight is visually comparable.
+    return `
+      <span class="flight-sky-icon moon" style="left:8.33%">☾</span>
+      <span class="flight-sky-icon sun" style="left:25%">☀</span>
+      <span class="flight-sky-icon sun" style="left:50%">☀</span>
+      <span class="flight-sky-icon sun" style="left:75%">☀</span>
+      <span class="flight-sky-icon moon" style="left:91.67%">☾</span>
+      <span class="sky-tick" style="left:0%">00</span>
+      <span class="sky-tick" style="left:25%">06</span>
+      <span class="sky-tick" style="left:50%">12</span>
+      <span class="sky-tick" style="left:75%">18</span>
+      <span class="sky-tick" style="left:100%">24</span>
+    `;
+  }
+
+  function buildTimeline(departure, arrival, depCode, arrCode) {
+    const dep = minutesFromTime(departure);
+    const arr = minutesFromTime(arrival);
+    if (dep === null || arr === null) return `<div class="no-flights">TIME DATA UNAVAILABLE</div>`;
+
+    const overnight = arr < dep;
+    const arrivalLabel = overnight ? `${formatTime(arrival)} +1` : formatTime(arrival);
+    const total = arr - dep < 0 ? arr - dep + 1440 : arr - dep;
+    const depPct = timePercent(dep);
+    const arrPct = timePercent(arr);
+
+    const depTZ = airportTimezone(depCode);
+    const arrTZ = airportTimezone(arrCode);
+
+    // A flight is drawn independently of the full 24-hour sky.
+    // For an overnight flight, the journey wraps across midnight, so two
+    // dotted segments are used.
+    let journey = "";
+    if (!overnight) {
+      journey = `
+        <div class="flight-journey" style="left:${depPct}%;width:${Math.max(arrPct-depPct,1)}%">
+          <div class="flight-journey-line"></div>
+          <span class="flight-duration">${durationText(dep, arr)}</span>
+          <span class="flight-air-icon takeoff" style="left:0%">✈</span>
+          <span class="flight-air-icon landing" style="left:100%">✈</span>
+        </div>`;
+    } else {
+      const firstWidth = Math.max(100-depPct, 1);
+      const secondWidth = Math.max(arrPct, 1);
+      journey = `
+        <div class="flight-journey" style="left:${depPct}%;width:${firstWidth}%">
+          <div class="flight-journey-line"></div>
+          <span class="flight-air-icon takeoff" style="left:0%">✈</span>
+        </div>
+        <div class="flight-journey" style="left:0%;width:${secondWidth}%">
+          <div class="flight-journey-line"></div>
+          <span class="flight-air-icon landing" style="left:100%">✈</span>
+          <span class="flight-duration">${durationText(dep, arr)}</span>
+        </div>`;
+    }
+
+    return `
+      <div class="timeline" aria-label="24 hour local-time sky with departure ${escapeHtml(formatTime(departure))} ${escapeHtml(depTZ)} and arrival ${escapeHtml(formatTime(arrival))} ${escapeHtml(arrTZ)}${overnight ? ' next day' : ''}">
+        <div class="flight-path-wrap">
+
+          ${journey}
+
+          <div class="flight-end-label departure" style="left:clamp(92px, ${depPct}%, calc(100% - 54px))">
+            ${escapeHtml(formatTime(departure))}
+          </div>
+          <div class="flight-end-label arrival ${overnight ? 'next-day' : ''}" style="left:clamp(54px, ${arrPct}%, calc(100% - 92px))">
+            ${escapeHtml(arrivalLabel)}
+          </div>
+
+          <div class="flight-timezone departure" style="left:clamp(120px, ${depPct}%, calc(100% - 60px))">
+            ${escapeHtml(depTZ)}
+          </div>
+          <div class="flight-timezone arrival" style="left:clamp(60px, ${arrPct}%, calc(100% - 120px))">
+            ${escapeHtml(arrTZ)}
+          </div>
+
+          <div class="flight-path-rail">
+            <div class="sky-gradient"></div>
+          </div>
+
+          ${buildSkyTimeline()}
+
+          <span class="flight-marker" style="left:${depPct}%"></span>
+          <span class="flight-marker" style="left:${arrPct}%"></span>
+        </div>
+      </div>
+      <div class="day-night-legend">
+        <span class="day">DAY</span>
+        <span class="night">NIGHT</span>
+        <span>LOCAL TIME</span>
+      </div>`;
+  }
+
+  function flightCard(flight, depCode, arrCode) {
+    return `
+      <div class="flight-card">
+        <div class="flight-top">
+          <div class="flight-airline">
+            ${flight.Airline_Logo ? `<img src="${escapeHtml(flight.Airline_Logo)}" alt="">` : ""}
+            <div class="flight-airline-text">
+              <div class="flight-airline-name">${escapeHtml(flight.Airline)}</div>
+              <div class="flight-number">${escapeHtml(flight.Flight_Number)}</div>
+            </div>
+          </div>
+
+          <div class="aircraft">${escapeHtml(flight.Aircraft || "Aircraft unavailable")}</div>
+
+          <div>
+            ${buildTimeline(flight.DEPT, flight.ARRT, depCode, arrCode)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // =====================================================================
+  // PLACEHOLDER / DEMO DATA
+  // =====================================================================
+  // REMOVE THESE DEMO_ROUTE / DEMO_FLIGHTS / DEMO_LONGHAUL_* BLOCKS when
+  // you no longer need the sample flights. Also remove the __demo logic
+  // in loadFlights() and the demo route insertion in loadRoutes().
+  // The real backend data comes from /fetch_route and /fetch_flight.
+  // =====================================================================
+  const SHOW_DEMO_ROUTES = true; // Set to false after your backend is connected.
+
+  const DEMO_ROUTE = {
+    PartitionKey: "Route",
+    RowKey: "DELBOM2026-10-05",
+    DEP: "DEL",
+    ARR: "BOM",
+    FREQ: "12",
+    DATE: "2026-10-05",
+    PRICE_HISTORY: "4899,5250,5100,4899",
+    LOWEST_PRICE: "4899",
+    PRICE_LEVEL: "LOW",
+    CHEAPEST_PRICE: "4899",
+    CHEAPEST_AIRLINE: "IndiGo",
+    CHEAPEST_AIRLINE_LOGO: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/IndiGo_Airlines_logo.svg/320px-IndiGo_Airlines_logo.svg.png",
+    CHEAPEST_FLIGHT_NUMBER: "6E 1234",
+    DEP_IMG: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=80",
+    ARR_IMG: "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=900&q=80"
+  };
+
+  const DEMO_FLIGHTS = [
+    { Airline: "IndiGo", Flight_Number: "6E 1234", Aircraft: "Airbus A320neo", DEPT: "06:30", ARRT: "08:45", Airline_Logo: DEMO_ROUTE.CHEAPEST_AIRLINE_LOGO },
+    { Airline: "Air India", Flight_Number: "AI 865", Aircraft: "Airbus A321", DEPT: "10:20", ARRT: "12:35", Airline_Logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Air_India_Logo.svg/320px-Air_India_Logo.svg.png" },
+    { Airline: "IndiGo", Flight_Number: "6E 5317", Aircraft: "Airbus A320", DEPT: "18:40", ARRT: "20:55", Airline_Logo: DEMO_ROUTE.CHEAPEST_AIRLINE_LOGO }
+  ];
+
+  const DEMO_LONGHAUL_ROUTE = { PartitionKey: "Route", RowKey: "DELLHR2026-10-06", DEP: "DEL", ARR: "LHR", FREQ: "5", DATE: "2026-10-06", LOWEST_PRICE: "48750", CHEAPEST_PRICE: "48750", CHEAPEST_AIRLINE: "British Airways", CHEAPEST_FLIGHT_NUMBER: "BA 142", CHEAPEST_AIRLINE_LOGO: "", DEP_IMG: DEMO_ROUTE.DEP_IMG, ARR_IMG: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=900&q=80" };
+  const DEMO_LONGHAUL_FLIGHTS = [
+    { Airline: "British Airways", Flight_Number: "BA 142", Aircraft: "Boeing 787-9 Dreamliner", DEPT: "23:15", ARRT: "05:55", Airline_Logo: "" },
+    { Airline: "Air India", Flight_Number: "AI 111", Aircraft: "Boeing 787-9 Dreamliner", DEPT: "14:05", ARRT: "18:35", Airline_Logo: "" }
+  ];
+
+  async function loadFlights(card) {
+    // BACKEND API: Replace /fetch_flight in API_BASE if your endpoint differs.
+    // Expected backend: GET /fetch_flight?DEP=DEL&ARR=BOM&DATE=2026-10-05
+    const details = card.querySelector(".route-details");
+    const list = details.querySelector(".flight-list");
+
+    if (card.dataset.flightsLoaded === "true") return;
+
+    list.innerHTML = `<div class="loading-flights">LOADING FLIGHT DETAILS…</div>`;
+
+    const dep = card.dataset.dep;
+    const arr = card.dataset.arr;
+    const date = card.dataset.date;
+
+    try {
+      if (card.dataset.demo === "true") {
+        const flights = card.dataset.demoType === "longhaul" ? DEMO_LONGHAUL_FLIGHTS : DEMO_FLIGHTS;
+        list.innerHTML = flights.map(flight => flightCard(flight, dep, arr)).join("");
+        card.dataset.flightsLoaded = "true";
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE}/fetch_flight?DEP=${encodeURIComponent(dep)}&ARR=${encodeURIComponent(arr)}&DATE=${encodeURIComponent(date)}`
+      );
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const flights = await response.json();
+
+      if (!flights.length) {
+        list.innerHTML = `<div class="no-flights">NO FLIGHTS FOUND FOR THIS ROUTE</div>`;
+        return;
+      }
+
+      list.innerHTML = flights.map(flight => flightCard(flight, dep, arr)).join("");
+      card.dataset.flightsLoaded = "true";
+    } catch (error) {
+      console.error(error);
+      list.innerHTML = `<div class="no-flights">UNABLE TO LOAD FLIGHT DETAILS</div>`;
+    }
+  }
+
+  function routeCard(route, index) {
+    const dep = String(route.DEP || "").toUpperCase();
+    const arr = String(route.ARR || "").toUpperCase();
+
+    const card = document.createElement("div");
+    card.className = "route-card";
+    card.style.animationDelay = `${Math.min(index * 50, 500)}ms`;
+
+    card.dataset.pk = route.PartitionKey || "";
+    card.dataset.rk = route.RowKey || "";
+    card.dataset.dep = dep;
+    card.dataset.arr = arr;
+    card.dataset.date = route.DATE || "";
+    card.dataset.demo = route.__demo ? "true" : "false";
+    card.dataset.demoType = route.__demoType || "";
+
+    const logo = route.CHEAPEST_AIRLINE_LOGO
+      ? `<img class="cheapest-logo" src="${escapeHtml(route.CHEAPEST_AIRLINE_LOGO)}" alt="">`
+      : "";
+
+    card.innerHTML = `
+      <div class="route-summary" role="button" tabindex="0"
+           aria-expanded="false"
+           aria-label="${escapeHtml(dep)} to ${escapeHtml(arr)}">
+        <div class="airport-photo">
+          ${route.DEP_IMG ? `<img src="${escapeHtml(route.DEP_IMG)}" alt="${escapeHtml(dep)} airport" onerror="this.style.display='none'">` : ""}
+          <div class="airport-label">
+            <span class="airport-code">${escapeHtml(dep)}</span>
+            <span class="airport-name">${escapeHtml(airportName(dep))}</span>
+          </div>
+        </div>
+
+        <div class="route-arrow">→</div>
+
+        <div class="airport-photo">
+          ${route.ARR_IMG ? `<img src="${escapeHtml(route.ARR_IMG)}" alt="${escapeHtml(arr)} airport" onerror="this.style.display='none'">` : ""}
+          <div class="airport-label">
+            <span class="airport-code">${escapeHtml(arr)}</span>
+            <span class="airport-name">${escapeHtml(airportName(arr))}</span>
+          </div>
+        </div>
+
+        <div class="route-meta">
+          <div class="meta-line">
+            <span class="meta-label">Date</span>
+            <strong>${escapeHtml(route.DATE)}</strong>
+          </div>
+        </div>
+
+        <div class="route-stat">
+          <span class="meta-label">Frequency</span>
+          <strong>${escapeHtml(route.FREQ)}</strong>
+          <span class="route-stat-sub">flights</span>
+        </div>
+
+        <div class="row-actions">
+          <button class="expand-btn" type="button" aria-label="Show flights">⌄</button>
+          <button class="delete-btn" type="button" aria-label="Delete route">×</button>
+        </div>
+      </div>
+
+      <div class="route-details">
+        <div class="details-heading">
+          <span>FLIGHT DETAILS</span>
+          <div class="details-price">
+            ${logo}
+            <div>
+              <span class="details-price-label">LOWEST PRICE</span>
+              <strong>${formatPrice(route.LOWEST_PRICE ?? route.CHEAPEST_PRICE)}</strong>
+              <small>${escapeHtml(route.CHEAPEST_AIRLINE || "Airline unavailable")} · ${escapeHtml(route.CHEAPEST_FLIGHT_NUMBER || "—")}</small>
+            </div>
+          </div>
+        </div>
+        <div class="flight-list"></div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  async function loadRoutes() {
+    // BACKEND API: This endpoint supplies the MasterTable route rows.
+    // Expected backend: GET /fetch_route
+    try {
+      // BACKEND API CALL — MasterTable
+      // Replace /fetch_route here if your backend uses a different route.
+      const response = await fetch(`${API_BASE}/fetch_route`);
+
+      if (!response.ok) throw new Error(await response.text());
+
+      const routes = await response.json();
+      board.innerHTML = "";
+
+      // PLACEHOLDER FLIGHTS: Delete/comment out the demo block below when
+      // you want ONLY your backend routes displayed.
+      if (SHOW_DEMO_ROUTES) {
+        const demo = { ...DEMO_ROUTE, __demo: true, __demoType: "domestic" };
+        const longhaulDemo = { ...DEMO_LONGHAUL_ROUTE, __demo: true, __demoType: "longhaul" };
+        board.appendChild(routeCard(demo, 0));
+        board.appendChild(routeCard(longhaulDemo, 1));
+      }
+
+      routes.forEach((route, index) => {
+        board.appendChild(routeCard(route, index + (SHOW_DEMO_ROUTES ? 2 : 0)));
+      });
+
+      updateCount();
+    } catch (error) {
+      console.warn("API unavailable; showing demo route.", error);
+      board.innerHTML = "";
+      // PLACEHOLDER FALLBACK: Remove this fallback block if you want the
+      // page to show an empty/error state instead of demo flights when the API fails.
+      if (SHOW_DEMO_ROUTES) {
+        board.appendChild(routeCard({ ...DEMO_ROUTE, __demo: true, __demoType: "domestic" }, 0));
+        board.appendChild(routeCard({ ...DEMO_LONGHAUL_ROUTE, __demo: true, __demoType: "longhaul" }, 1));
+      }
+      updateCount();
+    }
+  }
+
+  // ---------- Generic modal open/close ----------
+  function openModal(overlay, focusEl) {
+    overlay.classList.add('open');
+    if (focusEl) focusEl.focus();
+  }
+
+  function closeModal(overlay) {
+    overlay.classList.remove('open');
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal(overlay);
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.modal-overlay.open').forEach(closeModal);
+  });
+
+  // ---------- Add-route modal ----------
+  const toggleBtn = document.getElementById('toggle-add');
+  const addOverlay = document.getElementById('add-overlay');
+  const addForm = document.getElementById('add-route');
+
+  toggleBtn.addEventListener('click', () => {
+    openModal(addOverlay, document.getElementById('dep'));
+  });
+
+  document.getElementById('add-modal-close').addEventListener('click', () => {
+    closeModal(addOverlay);
+  });
+
+  function updateCount() {
+    const rows = board.querySelectorAll('.route-card');
+    routeCount.textContent = rows.length;
+    emptyState.style.display = rows.length === 0 ? 'block' : 'none';
+    board.style.display = rows.length === 0 ? 'none' : 'block';
+  }
+
+  // ---------- Route expansion + delete ----------
+  const deleteOverlay = document.getElementById('delete-overlay');
+  const deleteAccessCodeInput = document.getElementById('delete-access-code');
+  const deleteRoutePreview = document.getElementById('delete-route-preview');
+  let pendingDeleteRow = null;
+
+  board.addEventListener('click', async (e) => {
+    const deleteBtn = e.target.closest('.delete-btn');
+
+    if (deleteBtn) {
+      e.stopPropagation();
+
+      pendingDeleteRow = deleteBtn.closest('.route-card');
+
+      const dep = pendingDeleteRow.dataset.dep;
+      const arr = pendingDeleteRow.dataset.arr;
+      const date = pendingDeleteRow.dataset.date;
+
+      deleteRoutePreview.textContent = `${dep} → ${arr} · ${date}`;
+      deleteAccessCodeInput.value = '';
+
+      openModal(deleteOverlay, deleteAccessCodeInput);
+      return;
+    }
+
+    const summary = e.target.closest('.route-summary');
+    if (!summary) return;
+
+    const card = summary.closest('.route-card');
+    const isOpen = card.classList.toggle('open');
+
+    summary.setAttribute('aria-expanded', String(isOpen));
+
+    if (isOpen) {
+      await loadFlights(card);
+    }
+  });
+
+  board.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+
+    const summary = e.target.closest('.route-summary');
+    if (!summary) return;
+
+    e.preventDefault();
+
+    const card = summary.closest('.route-card');
+    const isOpen = card.classList.toggle('open');
+
+    summary.setAttribute('aria-expanded', String(isOpen));
+
+    if (isOpen) {
+      await loadFlights(card);
+    }
+  });
+
+  function closeDeleteModal() {
+    closeModal(deleteOverlay);
+    pendingDeleteRow = null;
+  }
+
+  document.getElementById('delete-modal-close').addEventListener('click', closeDeleteModal);
+  document.getElementById('delete-cancel-btn').addEventListener('click', closeDeleteModal);
+
+  document.getElementById('delete-confirm-btn').addEventListener('click', async () => {
+    const code = validateAccessCode(deleteAccessCodeInput);
+    if (!code) return;
+    if (!pendingDeleteRow) return;
+
+    try {
+      const response = await fetch(
+        // BACKEND API CALL — delete_route
+        // Expected backend: DELETE /delete_route?PartitionKey=...&RowKey=...
+        `${API_BASE}/delete_route?PartitionKey=${encodeURIComponent(pendingDeleteRow.dataset.pk)}&RowKey=${encodeURIComponent(pendingDeleteRow.dataset.rk)}`,
+        {
+          method: 'DELETE',
+          headers: { 'code': code }
+        }
+      );
+
+      if (!response.ok) {
+        alert(await response.text());
+        return;
+      }
+
+      await loadRoutes();
+      closeDeleteModal();
+    } catch (error) {
+      console.error(error);
+      alert("Unable to delete route.");
+    }
+  });
+
+  addForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const code = validateAccessCode(accessCodeInput);
+    if (!code) return;
+
+    const depInput = document.getElementById('dep');
+    const arrInput = document.getElementById('arr');
+    const dateInput = document.getElementById('flight-date');
+
+    const dep = depInput.value.trim().toUpperCase();
+    const arr = arrInput.value.trim().toUpperCase();
+    const date = dateInput.value;
+
+    let firstInvalid = null;
+
+    [[depInput, dep], [arrInput, arr], [dateInput, date]].forEach(([input, val]) => {
+      if (!val) {
+        input.classList.add('invalid');
+        setTimeout(() => input.classList.remove('invalid'), 300);
+        if (!firstInvalid) firstInvalid = input;
+      }
+    });
+
+    if (firstInvalid) {
+      firstInvalid.focus();
+      return;
+    }
+
+    try {
+      // BACKEND API CALL — add_route
+      // Expected backend: POST /add_route with { DEP, ARR, DATE }
+      const response = await fetch(`${API_BASE}/add_route`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'code': code
+        },
+        body: JSON.stringify({
+          DEP: dep,
+          ARR: arr,
+          DATE: date
+        })
+      });
+
+      if (!response.ok) {
+        alert(await response.text());
+        return;
+      }
+
+      await loadRoutes();
+      addForm.reset();
+      closeModal(addOverlay);
+      showSuccess(dep, arr);
+    } catch (error) {
+      console.error(error);
+      alert("Unable to add route.");
+    }
+  });
+
+  window.addEventListener('load', loadRoutes);
+
+  // ---------- Success modal (flight animation) ----------
+  const successOverlay = document.getElementById('success-overlay');
+  const successRouteText = document.getElementById('success-route-text');
+  const successCheck = document.getElementById('success-check');
+  const planeIcon = document.getElementById('plane-icon');
+
+  function showSuccess(dep, arr) {
+    successRouteText.textContent = `${dep} → ${arr}`;
+    successCheck.classList.remove('show');
+
+    openModal(successOverlay);
+
+    // Restart the plane animation each time by removing and re-adding
+    // the class. offsetWidth isn't reliably defined on SVG elements
+    // across browsers, so getBoundingClientRect() is used instead to
+    // force the reflow the browser needs to notice the class change.
+    planeIcon.classList.remove('flying');
+    planeIcon.getBoundingClientRect();
+    planeIcon.classList.add('flying');
+
+    const revealCheck = () => successCheck.classList.add('show');
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      revealCheck(); // no animation to wait for
+    } else {
+      planeIcon.addEventListener('animationend', revealCheck, { once: true });
+    }
+  }
+
+  document.getElementById('success-done-btn').addEventListener('click', () => {
+    closeModal(successOverlay);
+  });
+  window.addEventListener('load', loadRoutes);
+</script>
+
+</body>
+</html>
