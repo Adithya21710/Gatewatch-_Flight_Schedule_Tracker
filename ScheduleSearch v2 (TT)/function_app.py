@@ -564,8 +564,7 @@ def dictcheck():
                                 "ARRT":flight_data["ARRT"],
                                 "AIRLINE_LOGO":flight_data["AIRLINE_LOGO"]}
                 emailfreq(dep,arr,date1,flight_number,flight_data["AIRLINE"],flight_data["AIRCRAFT"],flight_data["DEPT"],flight_data["ARRT"],flight_data["AIRLINE_LOGO"])
-                table_client2.create_entity(new_entity2)
-                
+             
 
         cheapest = min(all_flights, key=lambda f: f.get("price", float("inf")), default=None)
         cheapest_price2 = cheapest.get("price")
