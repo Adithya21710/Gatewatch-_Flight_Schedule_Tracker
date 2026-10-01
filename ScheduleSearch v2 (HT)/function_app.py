@@ -176,12 +176,118 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
             },
             "content": {
                 "subject": "New Prompt Added",
-                "plainText": (
-                    f"A new prompt has been added on the app, for:\n\n"
-                    f"Route: {dep} - {arr}\n"
-                    f"Frequency (as on date of addition): {freq}\n"
-                    f"Date: {date3}"
-                ),
+                "html": f"""
+                <html>
+                <body style="
+                    margin:0;
+                    padding:25px 10px;
+                    background:#ffffff;
+                    font-family:Arial,Helvetica,sans-serif;
+                ">
+
+                <table width="100%" cellpadding="0" cellspacing="0"
+                    style="
+                        max-width:1000px;
+                        margin:auto;
+                        background:#101418;
+                    ">
+
+                <tr>
+                <td style="padding:28px;">
+
+                    <!-- STATUS -->
+                    <table cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="
+                                width:8px;
+                                height:42px;
+                                background:#4FD1A5;
+                                border-radius:4px;
+                            ">
+                                &nbsp;
+                            </td>
+
+                            <td style="padding-left:14px;">
+                                <div style="
+                                    font-family:'Courier New',monospace;
+                                    font-size:10px;
+                                    color:#4FD1A5;
+                                    letter-spacing:.12em;
+                                ">
+                                    ROUTE ADDED
+                                </div>
+
+                                <div style="
+                                    margin-top:5px;
+                                    font-size:24px;
+                                    font-weight:bold;
+                                    color:#E8E6E1;
+                                ">
+                                    {dep} → {arr}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+
+                    <!-- DETAILS -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                        style="
+                            margin-top:25px;
+                            border-top:1px solid #33383B;
+                        ">
+
+                        <tr>
+                            <td style="
+                                padding-top:14px;
+                                font-family:'Courier New',monospace;
+                                font-size:10px;
+                                color:#8B9094;
+                            ">
+                                FREQUENCY
+                            </td>
+
+                            <td align="right"
+                                style="
+                                    padding-top:14px;
+                                    font-family:'Courier New',monospace;
+                                    font-size:15px;
+                                    color:#E8E6E1;
+                                ">
+                                {freq}x daily
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="
+                                padding-top:10px;
+                                font-family:'Courier New',monospace;
+                                font-size:10px;
+                                color:#8B9094;
+                            ">
+                                EFFECTIVE DATE
+                            </td>
+
+                            <td align="right"
+                                style="
+                                    padding-top:10px;
+                                    font-family:'Courier New',monospace;
+                                    font-size:13px;
+                                    color:#E8E6E1;
+                                ">
+                                {date3}
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </td>
+                </tr>
+                </table>
+
+                </body>
+                </html>
+                """
             },
         }
         poller = client.begin_send(message)
@@ -225,7 +331,118 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
             },
             "content": {
                 "subject": f'Prompt Deleted',
-                "plainText": f'A prompt has been deleted from the app, for:\n\nRoute: {dep}-{arr}\nFrequency (as on date of deletion): {freq}\nDate: {date}\nPrice (as on date of deletion in INR): {price}',
+                "html": f"""
+                <html>
+                <body style="
+                    margin:0;
+                    padding:25px 10px;
+                    background:#ffffff;
+                    font-family:Arial,Helvetica,sans-serif;
+                ">
+
+                <table width="100%" cellpadding="0" cellspacing="0"
+                    style="
+                        max-width:1000px;
+                        margin:auto;
+                        background:#101418;
+                    ">
+
+                <tr>
+                <td style="padding:28px;">
+
+                    <!-- STATUS -->
+                    <table cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="
+                                width:8px;
+                                height:42px;
+                                background:#E1554F;
+                                border-radius:4px;
+                            ">
+                                &nbsp;
+                            </td>
+
+                            <td style="padding-left:14px;">
+                                <div style="
+                                    font-family:'Courier New',monospace;
+                                    font-size:10px;
+                                    color:#E1554F;
+                                    letter-spacing:.12em;
+                                ">
+                                    ROUTE REMOVED
+                                </div>
+
+                                <div style="
+                                    margin-top:5px;
+                                    font-size:24px;
+                                    font-weight:bold;
+                                    color:#E8E6E1;
+                                ">
+                                    {dep} → {arr}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+
+                    <!-- DETAILS -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                        style="
+                            margin-top:25px;
+                            border-top:1px solid #33383B;
+                        ">
+
+                        <tr>
+                            <td style="
+                                padding-top:14px;
+                                font-family:'Courier New',monospace;
+                                font-size:10px;
+                                color:#8B9094;
+                            ">
+                                FREQUENCY
+                            </td>
+
+                            <td align="right"
+                                style="
+                                    padding-top:14px;
+                                    font-family:'Courier New',monospace;
+                                    font-size:15px;
+                                    color:#E8E6E1;
+                                ">
+                                {freq}x daily
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="
+                                padding-top:10px;
+                                font-family:'Courier New',monospace;
+                                font-size:10px;
+                                color:#8B9094;
+                            ">
+                                EFFECTIVE DATE
+                            </td>
+
+                            <td align="right"
+                                style="
+                                    padding-top:10px;
+                                    font-family:'Courier New',monospace;
+                                    font-size:13px;
+                                    color:#E8E6E1;
+                                ">
+                                {date}
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </td>
+                </tr>
+                </table>
+
+                </body>
+                </html>
+                """
             },
             
         }
