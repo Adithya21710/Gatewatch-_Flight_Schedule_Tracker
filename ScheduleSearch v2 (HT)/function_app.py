@@ -121,6 +121,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
         airports = airports_list[0]
         dep_image = (airports.get("departure") or [{}])[0].get("image")
         arr_image = (airports.get("arrival") or [{}])[0].get("image")
+        
 
 
         new_entity={"PartitionKey":"Route",
@@ -145,11 +146,12 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
 
             airline=segment["airline"]
             airline_logo=flight.get("airline_logo", "")
-            airplane=segment["airplane"]
-            rk2=segment["flight_number"]
+            airplane=segment.get["airplane",""]
+            rk2=segment.get["flight_number",""]
 
             dep2=segment["departure_airport"]["time"]
             arr2=segment["arrival_airport"]["time"]
+            duration = flight.get("total_duration", 0)
 
 
             new_entity2 = {"PartitionKey":rk,
@@ -158,7 +160,8 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                             "AIRCRAFT":airplane,
                             "DEPT":dep2,
                             "ARRT":arr2,
-                            "AIRLINE_LOGO":airline_logo}
+                            "AIRLINE_LOGO":airline_logo,
+                            "TIME":duration}
             table_client2.create_entity(new_entity2)
             
         
