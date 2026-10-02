@@ -551,7 +551,8 @@ def dictcheck():
                     "AIRCRAFT": flight.get("airplane"),
                     "DEPT": flight["departure_airport"]["time"],
                     "ARRT": flight["arrival_airport"]["time"],
-                    "AIRLINE_LOGO": flight.get("airline_logo")
+                    "AIRLINE_LOGO": flight.get("airline_logo"),
+                    "TIME":flight.get("total_duration")
                 }
 
         for flight_number, flight_data in current_flights.items():
@@ -562,7 +563,8 @@ def dictcheck():
                                 "AIRCRAFT":flight_data["AIRCRAFT"],
                                 "DEPT":flight_data["DEPT"],
                                 "ARRT":flight_data["ARRT"],
-                                "AIRLINE_LOGO":flight_data["AIRLINE_LOGO"]}
+                                "AIRLINE_LOGO":flight_data["AIRLINE_LOGO"],
+                                "TIME":flight_data["Duration"]}
                 emailfreq(dep,arr,date1,flight_number,flight_data["AIRLINE"],flight_data["AIRCRAFT"],flight_data["DEPT"],flight_data["ARRT"],flight_data["AIRLINE_LOGO"])
              
 

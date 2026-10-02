@@ -2050,46 +2050,6 @@
     `;
   }
 
-  // =====================================================================
-  // PLACEHOLDER / DEMO DATA
-  // =====================================================================
-  // REMOVE THESE DEMO_ROUTE / DEMO_FLIGHTS / DEMO_LONGHAUL_* BLOCKS when
-  // you no longer need the sample flights. Also remove the __demo logic
-  // in loadFlights() and the demo route insertion in loadRoutes().
-  // The real backend data comes from /fetch_route and /fetch_flight.
-  // =====================================================================
-  const SHOW_DEMO_ROUTES = false; // Set to false after your backend is connected.
-
-  const DEMO_ROUTE = {
-    PartitionKey: "Route",
-    RowKey: "DELBOM2026-10-05",
-    DEP: "DEL",
-    ARR: "BOM",
-    FREQ: "12",
-    DATE: "2026-10-05",
-    PRICE_HISTORY: "4899,5250,5100,4899",
-    LOWEST_PRICE: "4899",
-    PRICE_LEVEL: "LOW",
-    CHEAPEST_PRICE: "4899",
-    CHEAPEST_AIRLINE: "IndiGo",
-    CHEAPEST_AIRLINE_LOGO: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/IndiGo_Airlines_logo.svg/320px-IndiGo_Airlines_logo.svg.png",
-    CHEAPEST_FLIGHT_NUMBER: "6E 1234",
-    DEP_IMG: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=80",
-    ARR_IMG: "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=900&q=80"
-  };
-
-  const DEMO_FLIGHTS = [
-    { Airline: "IndiGo", Flight_Number: "6E 1234", Aircraft: "Airbus A320neo", DEPT: "06:30", ARRT: "08:45", Airline_Logo: DEMO_ROUTE.CHEAPEST_AIRLINE_LOGO },
-    { Airline: "Air India", Flight_Number: "AI 865", Aircraft: "Airbus A321", DEPT: "10:20", ARRT: "12:35", Airline_Logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Air_India_Logo.svg/320px-Air_India_Logo.svg.png" },
-    { Airline: "IndiGo", Flight_Number: "6E 5317", Aircraft: "Airbus A320", DEPT: "18:40", ARRT: "20:55", Airline_Logo: DEMO_ROUTE.CHEAPEST_AIRLINE_LOGO }
-  ];
-
-  const DEMO_LONGHAUL_ROUTE = { PartitionKey: "Route", RowKey: "DELLHR2026-10-06", DEP: "DEL", ARR: "LHR", FREQ: "5", DATE: "2026-10-06", LOWEST_PRICE: "48750", CHEAPEST_PRICE: "48750", CHEAPEST_AIRLINE: "British Airways", CHEAPEST_FLIGHT_NUMBER: "BA 142", CHEAPEST_AIRLINE_LOGO: "", DEP_IMG: DEMO_ROUTE.DEP_IMG, ARR_IMG: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=900&q=80" };
-  const DEMO_LONGHAUL_FLIGHTS = [
-    { Airline: "British Airways", Flight_Number: "BA 142", Aircraft: "Boeing 787-9 Dreamliner", DEPT: "23:15", ARRT: "05:55", Airline_Logo: "" },
-    { Airline: "Air India", Flight_Number: "AI 111", Aircraft: "Boeing 787-9 Dreamliner", DEPT: "14:05", ARRT: "18:35", Airline_Logo: "" }
-  ];
-
   async function loadFlights(card) {
     // BACKEND API: Replace /fetch_flight in API_BASE if your endpoint differs.
     // Expected backend: GET /fetch_flight?DEP=DEL&ARR=BOM&DATE=2026-10-05
@@ -2105,12 +2065,6 @@
     const date = card.dataset.date;
 
     try {
-      if (card.dataset.demo === "true") {
-        const flights = card.dataset.demoType === "longhaul" ? DEMO_LONGHAUL_FLIGHTS : DEMO_FLIGHTS;
-        list.innerHTML = flights.map(flight => flightCard(flight, dep, arr)).join("");
-        card.dataset.flightsLoaded = "true";
-        return;
-      }
 
       const response = await fetch(
         `${API_BASE}/fetch_flight?DEP=${encodeURIComponent(dep)}&ARR=${encodeURIComponent(arr)}&DATE=${encodeURIComponent(date)}`
@@ -2148,8 +2102,6 @@
     card.dataset.dep = dep;
     card.dataset.arr = arr;
     card.dataset.date = route.DATE || "";
-    card.dataset.demo = route.__demo ? "true" : "false";
-    card.dataset.demoType = route.__demoType || "";
 
     const logo = route.CHEAPEST_AIRLINE_LOGO
       ? `<img class="cheapest-logo" src="${escapeHtml(route.CHEAPEST_AIRLINE_LOGO)}" alt="">`
@@ -2228,29 +2180,14 @@
       const routes = await response.json();
       board.innerHTML = "";
 
-      // PLACEHOLDER FLIGHTS: Delete/comment out the demo block below when
-      // you want ONLY your backend routes displayed.
-      if (SHOW_DEMO_ROUTES) {
-        const demo = { ...DEMO_ROUTE, __demo: true, __demoType: "domestic" };
-        const longhaulDemo = { ...DEMO_LONGHAUL_ROUTE, __demo: true, __demoType: "longhaul" };
-        board.appendChild(routeCard(demo, 0));
-        board.appendChild(routeCard(longhaulDemo, 1));
-      }
-
       routes.forEach((route, index) => {
-        board.appendChild(routeCard(route, index + (SHOW_DEMO_ROUTES ? 2 : 0)));
+        board.appendChild(routeCard(route, index));
       });
 
       updateCount();
     } catch (error) {
-      console.warn("API unavailable; showing demo route.", error);
+      console.error("Unable to load routes: ", error);
       board.innerHTML = "";
-      // PLACEHOLDER FALLBACK: Remove this fallback block if you want the
-      // page to show an empty/error state instead of demo flights when the API fails.
-      if (SHOW_DEMO_ROUTES) {
-        board.appendChild(routeCard({ ...DEMO_ROUTE, __demo: true, __demoType: "domestic" }, 0));
-        board.appendChild(routeCard({ ...DEMO_LONGHAUL_ROUTE, __demo: true, __demoType: "longhaul" }, 1));
-      }
       updateCount();
     }
   }
