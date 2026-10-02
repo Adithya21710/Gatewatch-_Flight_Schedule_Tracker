@@ -68,7 +68,8 @@ def fetch_flight(req: func.HttpRequest) -> func.HttpResponse:
                                 "Aircraft":entity["AIRCRAFT"],
                                 "DEPT":entity["DEPT"],
                                 "ARRT":entity["ARRT"],
-                                "Airline_Logo":entity["AIRLINE_LOGO"]})
+                                "Airline_Logo":entity["AIRLINE_LOGO"],
+                                "Duration":entity["TIME"]})
 
     return func.HttpResponse(json.dumps(routelist2), status_code=200)
 
