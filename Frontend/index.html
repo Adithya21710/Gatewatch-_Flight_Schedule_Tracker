@@ -535,7 +535,7 @@
 
   .route-summary {
     display: grid;
-    grid-template-columns: 1fr 64px 1fr 140px 180px 40px;
+    grid-template-columns: 1fr 64px 1fr 140px 180px 180px;
     align-items: center;
     min-height: 150px;
     cursor: pointer;
@@ -747,7 +747,7 @@
 
   .flight-top {
     display: grid;
-    grid-template-columns: 180px 110px 1fr;
+    grid-template-columns: 180px 110px 1fr auto;
     align-items: center;
     gap: 14px;
   }
@@ -1078,8 +1078,42 @@
 
   .row-actions {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
+    gap: 6px;
     padding: 0 12px 0 0 !important;
+  }
+
+  .ai-price-btn,
+  .aircraft-info-btn {
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--text-dim);
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 1.1;
+    padding: 7px 9px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .ai-price-btn {
+    color: var(--amber);
+    border-color: var(--amber-dim);
+  }
+
+  .ai-price-btn:hover {
+    background: rgba(242, 169, 59, 0.08);
+    border-color: var(--amber);
+  }
+
+  .aircraft-info-btn:hover {
+    background: rgba(79, 209, 165, 0.08);
+    border-color: var(--teal);
+    color: var(--teal);
   }
 
   .delete-btn {
@@ -1157,6 +1191,13 @@
       border-top: 1px solid var(--hairline);
     }
 
+    .row-actions {
+      grid-column: 1 / -1;
+      justify-content: flex-end;
+      padding: 8px 14px !important;
+      border-top: 1px solid var(--hairline);
+    }
+
     .cheapest {
       border-top: 1px solid var(--hairline);
     }
@@ -1172,6 +1213,10 @@
     .flight-top {
       grid-template-columns: 1fr;
       gap: 7px;
+    }
+
+    .aircraft-info-btn {
+      justify-self: start;
     }
 
     .timeline { min-width: 190px; height: 164px; }
@@ -1923,8 +1968,16 @@
   function durationText(dep, arr) {
     let mins = arr - dep;
     if (mins < 0) mins += 1440;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
+    return durationTextFromMinutes(mins);
+  }
+
+  function durationTextFromMinutes(value) {
+    const mins = Number(value);
+    if (!Number.isFinite(mins) || mins < 0) return "—";
+
+    const rounded = Math.round(mins);
+    const h = Math.floor(rounded / 60);
+    const m = rounded % 60;
     return `${h}h ${String(m).padStart(2, '0')}m`;
   }
 
@@ -1949,14 +2002,17 @@
     `;
   }
 
-  function buildTimeline(departure, arrival, depCode, arrCode) {
+  function buildTimeline(departure, arrival, depCode, arrCode, backendDuration) {
     const dep = minutesFromTime(departure);
     const arr = minutesFromTime(arrival);
     if (dep === null || arr === null) return `<div class="no-flights">TIME DATA UNAVAILABLE</div>`;
 
     const overnight = arr < dep;
     const arrivalLabel = overnight ? `${formatTime(arrival)} +1` : formatTime(arrival);
-    const total = arr - dep < 0 ? arr - dep + 1440 : arr - dep;
+    const calculatedDuration = arr - dep < 0 ? arr - dep + 1440 : arr - dep;
+    const duration = Number.isFinite(Number(backendDuration))
+      ? durationTextFromMinutes(backendDuration)
+      : durationTextFromMinutes(calculatedDuration);
     const depPct = timePercent(dep);
     const arrPct = timePercent(arr);
 
@@ -1971,7 +2027,7 @@
       journey = `
         <div class="flight-journey" style="left:${depPct}%;width:${Math.max(arrPct-depPct,1)}%">
           <div class="flight-journey-line"></div>
-          <span class="flight-duration">${durationText(dep, arr)}</span>
+          <span class="flight-duration">${escapeHtml(duration)}</span>
           <span class="flight-air-icon takeoff" style="left:0%">✈</span>
           <span class="flight-air-icon landing" style="left:100%">✈</span>
         </div>`;
@@ -1986,7 +2042,7 @@
         <div class="flight-journey" style="left:0%;width:${secondWidth}%">
           <div class="flight-journey-line"></div>
           <span class="flight-air-icon landing" style="left:100%">✈</span>
-          <span class="flight-duration">${durationText(dep, arr)}</span>
+          <span class="flight-duration">${escapeHtml(duration)}</span>
         </div>`;
     }
 
@@ -2028,6 +2084,9 @@
   }
 
   function flightCard(flight, depCode, arrCode) {
+    const aircraft = flight.Aircraft || "Aircraft unavailable";
+    const flightNumber = flight.Flight_Number || "—";
+
     return `
       <div class="flight-card">
         <div class="flight-top">
@@ -2035,15 +2094,23 @@
             ${flight.Airline_Logo ? `<img src="${escapeHtml(flight.Airline_Logo)}" alt="">` : ""}
             <div class="flight-airline-text">
               <div class="flight-airline-name">${escapeHtml(flight.Airline)}</div>
-              <div class="flight-number">${escapeHtml(flight.Flight_Number)}</div>
+              <div class="flight-number">${escapeHtml(flightNumber)}</div>
             </div>
           </div>
 
-          <div class="aircraft">${escapeHtml(flight.Aircraft || "Aircraft unavailable")}</div>
+          <div class="aircraft">${escapeHtml(aircraft)}</div>
 
           <div>
-            ${buildTimeline(flight.DEPT, flight.ARRT, depCode, arrCode)}
+            ${buildTimeline(flight.DEPT, flight.ARRT, depCode, arrCode, flight.Duration)}
           </div>
+
+          <button
+            type="button"
+            class="aircraft-info-btn"
+            data-aircraft="${escapeHtml(aircraft)}"
+            data-flight-number="${escapeHtml(flightNumber)}"
+            aria-label="Know more about the aircraft ${escapeHtml(aircraft)}"
+          >Know more about the aircraft</button>
         </div>
       </div>
     `;
@@ -2142,6 +2209,7 @@
         </div>
 
         <div class="row-actions">
+          <button class="ai-price-btn" type="button" aria-label="Analyze prices by AI">Analyze Prices by AI</button>
           <button class="expand-btn" type="button" aria-label="Show flights">⌄</button>
           <button class="delete-btn" type="button" aria-label="Delete route">×</button>
         </div>
@@ -2239,6 +2307,28 @@
   let pendingDeleteRow = null;
 
   board.addEventListener('click', async (e) => {
+    const aiPriceBtn = e.target.closest('.ai-price-btn');
+
+    if (aiPriceBtn) {
+      e.stopPropagation();
+      const card = aiPriceBtn.closest('.route-card');
+      const dep = card?.dataset.dep || "";
+      const arr = card?.dataset.arr || "";
+      const date = card?.dataset.date || "";
+      alert(`AI price analysis for ${dep} → ${arr} on ${date} will be connected to the AI pricing endpoint.`);
+      return;
+    }
+
+    const aircraftBtn = e.target.closest('.aircraft-info-btn');
+
+    if (aircraftBtn) {
+      e.stopPropagation();
+      const aircraft = aircraftBtn.dataset.aircraft || "Aircraft unavailable";
+      const flightNumber = aircraftBtn.dataset.flightNumber || "";
+      alert(`Aircraft: ${aircraft}${flightNumber ? `\nFlight: ${flightNumber}` : ""}\n\nAircraft information will be connected to the aircraft information service.`);
+      return;
+    }
+
     const deleteBtn = e.target.closest('.delete-btn');
 
     if (deleteBtn) {
