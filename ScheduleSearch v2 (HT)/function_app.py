@@ -147,8 +147,8 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
 
             airline=segment["airline"]
             airline_logo=flight.get("airline_logo", "")
-            airplane=segment.get["airplane",""]
-            rk2=segment.get["flight_number",""]
+            airplane=segment.get("airplane","")
+            rk2=segment.get("flight_number","")
 
             dep2=segment["departure_airport"]["time"]
             arr2=segment["arrival_airport"]["time"]
