@@ -4,6 +4,7 @@ import logging
 import requests
 import azure.functions as func
 from datetime import date
+from azure.storage.blob import BlobServiceClient
 from azure.communication.email import EmailClient
 from azure.core.credentials import AzureKeyCredential
 from azure.data.tables import TableServiceClient
@@ -21,17 +22,17 @@ app = func.FunctionApp()
 
 
 def emailfreq(dep,arr,date2,flight_number,airline,aircraft,dep_time,arr_time,airline_logo):
+    CONTAINER_NAME = "gatewatchemail"
+    BLOB_NAME = "subscribers.json"
+    blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+    blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+    subscribers =  json.loads(blob.download_blob().readall())
+
     message = {
             "senderAddress": "DoNotReply@b69c3249-d05b-47d9-a9a3-9fc4b60755d6.azurecomm.net",
             "recipients": {
-                "bcc": [
-                            {"address": "autoalpha72110@gmail.com"}
-                        ]
+                "bcc": [{"address": email} for email in subscribers]
             },
-            #"content": {
-            #    "subject": f'A new flight has been added by {airline} on {dep} - {arr}',
-            #    "plainText": f'{airline} is adding a new flight on\n\nRoute:{dep} - {arr}\nOld Frequency: {old}x daily\nNew Frequency: {new}x daily\nDate: {date2}',
-            #},
             "content": {
         "subject": f"New flight added by {airline} on {dep} - {arr}",
         "html": f""" 
@@ -233,12 +234,17 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
         nameplate="increased"
     else:
         nameplate="decreased"
+
+    CONTAINER_NAME = "gatewatchemail"
+    BLOB_NAME = "subscribers.json"
+    blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+    blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+    subscribers =  json.loads(blob.download_blob().readall())
+
     message = {
             "senderAddress": "DoNotReply@b69c3249-d05b-47d9-a9a3-9fc4b60755d6.azurecomm.net",
             "recipients": {
-                "bcc": [
-                            {"address": "autoalpha72110@gmail.com"}
-                        ]
+                "bcc": [{"address": email} for email in subscribers]
             },
             "content": {
                 "subject": f'Price has {nameplate} on {dep} - {arr}',
@@ -460,12 +466,15 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
     poller = client.begin_send(message)
 
 def emaildate(dep,arr):
+    CONTAINER_NAME = "gatewatchemail"
+    BLOB_NAME = "subscribers.json"
+    blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+    blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+    subscribers =  json.loads(blob.download_blob().readall())
     message = {
             "senderAddress": "DoNotReply@b69c3249-d05b-47d9-a9a3-9fc4b60755d6.azurecomm.net",
             "recipients": {
-                "bcc": [
-                            {"address": "autoalpha72110@gmail.com"}
-                        ]
+                "bcc": [{"address": email} for email in subscribers]
             },
             "content": {
                 "subject": f'Date expired for route',

@@ -4,6 +4,7 @@ import json
 import requests
 import azure.functions as func
 from azure.data.tables import TableServiceClient
+from azure.storage.blob import BlobServiceClient
 from azure.communication.email import EmailClient
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import ResourceExistsError
@@ -73,12 +74,37 @@ def fetch_flight(req: func.HttpRequest) -> func.HttpResponse:
 
     return func.HttpResponse(json.dumps(routelist2), status_code=200)
 
+@app.route(route="add_email",methods=['POST'])
+def add_email(req: func.HttpRequest) -> func.HttpResponse:
+
+    code = req.headers.get('code')   
+    e_code=os.environ.get('ACCESS_CODE')
+    if code==e_code:
+        data = req.get_json()
+        email = data.get("email", "").strip().lower()
+        if not email or "@" not in email:
+            return func.HttpResponse("Invalid email", status_code=400)
+
+        if email in master_email:
+            return func.HttpResponse("Already subscribed", status_code=409)
+
+        CONTAINER_NAME = "gatewatchemail"
+        BLOB_NAME = "subscribers.json"
+        blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+        blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+        master_email=json.loads(blob.download_blob().readall())
+        master_email.append(email)
+        blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME).upload_blob(json.dumps(master_email), overwrite=True)
+        return func.HttpResponse("New Email added successfully", status_code=201)
+    else:
+        return func.HttpResponse("Access denied", status_code=403)
+
+
 @app.route(route="add_route", methods=['POST'])
 def add_route(req: func.HttpRequest) -> func.HttpResponse:
-    code = req.headers.get('code')
-    
-    e_code=os.environ.get('ACCESS_CODE')
 
+    code = req.headers.get('code')
+    e_code=os.environ.get('ACCESS_CODE')
     if code==e_code:
         table_service = TableServiceClient.from_connection_string(conn_str=storage_key)
         table_client = table_service.get_table_client("MasterTable")
@@ -171,12 +197,16 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
         except ResourceExistsError:
             return func.HttpResponse("This route and date is already being tracked", status_code=409)
 
+        CONTAINER_NAME = "gatewatchemail"
+        BLOB_NAME = "subscribers.json"
+        blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+        blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+        subscribers =  json.loads(blob.download_blob().readall())
+
         message = {
             "senderAddress": "DoNotReply@b69c3249-d05b-47d9-a9a3-9fc4b60755d6.azurecomm.net",
             "recipients": {
-                "bcc": [
-                    {"address": "autoalpha72110@gmail.com"}
-                ]
+                "bcc": [{"address": email} for email in subscribers]
             },
             "content": {
                 "subject": "New Prompt Added",
@@ -325,13 +355,16 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
         for entity in entities:
             table_client2.delete_entity(partition_key=entity["PartitionKey"], row_key=entity["RowKey"])
 
+        CONTAINER_NAME = "gatewatchemail"
+        BLOB_NAME = "subscribers.json"
+        blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+        blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+        subscribers =  json.loads(blob.download_blob().readall())
+
         message = {
             "senderAddress": "DoNotReply@b69c3249-d05b-47d9-a9a3-9fc4b60755d6.azurecomm.net",
             "recipients": {
-                "bcc": [
-                            {"address": "autoalpha72110@gmail.com"}
-                            
-                        ]
+                "bcc": [{"address": email} for email in subscribers]
             },
             "content": {
                 "subject": f'Prompt Deleted',
