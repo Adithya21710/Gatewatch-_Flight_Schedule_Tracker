@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import requests
+from google import genai
 import azure.functions as func
 from azure.data.tables import TableServiceClient
 from azure.storage.blob import BlobServiceClient
@@ -54,14 +55,14 @@ def fetch_flight(req: func.HttpRequest) -> func.HttpResponse:
     dep=req.params.get("DEP")
     arr=req.params.get("ARR")
     date=req.params.get("DATE")
-    pk=dep+arr+date 
+    rk=dep+arr+date 
 
     entities=table_client.list_entities()
 
     routelist2=[]
 
     for entity in entities:
-        if pk==entity["PartitionKey"]:
+        if rk==entity["PartitionKey"]:
             routelist2.append({"PartitionKey": entity["PartitionKey"],
                                "Flight_Number":entity["RowKey"],
                                 "RowKey": entity["RowKey"],
@@ -73,6 +74,144 @@ def fetch_flight(req: func.HttpRequest) -> func.HttpResponse:
                                 "Duration":entity["TIME"]})
 
     return func.HttpResponse(json.dumps(routelist2), status_code=200)
+
+@app.route(route="fetch_price_data",methods=['GET'])
+def fetch__price_data(req: func.HttpRequest) -> func.HttpResponse:
+    gemini_client = genai.Client(api_key=os.environ["Gemini_API"])
+    table_service = TableServiceClient.from_connection_string(conn_str=storage_key)
+    table_client = table_service.get_table_client("MasterTable")
+    dep=req.params.get("DEP")
+    arr=req.params.get("ARR")
+    date=req.params.get("DATE")
+    rk=dep+arr+date
+
+    entity = table_client.get_entity(partition_key="Route",row_key=rk)
+    price_history = entity["PRICE_LEVEL"]
+
+    prompt = f"""
+    You are the price-analysis AI for GATEWATCH INDIA.
+    Analyze the following historical flight-price data on the route {dep}-{arr}.
+
+    Each entry is:[timestamp, price_in_INR]
+
+    Data:{price_history}
+
+    Tasks:
+    1. Convert the timestamps into dates.
+    2. Identify the minimum, maximum and average price.
+    3. Identify significant price increases and decreases.
+    4. Identify periods where the price remained relatively low.
+    5. Compare the current price with the historical prices.
+    6. Based ONLY on the historical pattern, assess whether the
+    current price appears relatively low, typical, or high.
+    7. Give a booking-timing assessment based on the observed
+    historical pattern.
+
+    Important:
+    Do NOT produce a long list of bullet points.
+    - Do NOT give a technical specification sheet.
+    - Use a natural, conversational style.
+    - Organize the answer into a few short sections with clear headings.
+    - Prefer short paragraphs over bullet points.
+    - Keep the entire response concise and easy to scan.
+    - Focus on information that is actually useful to a traveller.
+    - Do not guarantee that prices will fall or rise.
+    - Do not claim to predict the future with certainty.
+    - Do not invent information that isn't present in the data.
+    - Clearly distinguish historical observations from future expectations.
+    - Keep the final assessment concise and useful to a traveller.
+    """
+    response = gemini_client.models.generate_content(
+    model="gemini-3.8-flash",
+    contents=prompt)
+
+    return func.HttpResponse(json.dumps({"analysis": response.text}),mimetype="application/json",status_code=200)
+
+@app.route(route="fetch_flight_data",methods=['GET'])
+def fetch__flight_data(req: func.HttpRequest) -> func.HttpResponse:
+    gemini_client = genai.Client(api_key=os.environ["Gemini_API"])
+    table_service = TableServiceClient.from_connection_string(conn_str=storage_key)
+    table_client = table_service.get_table_client("AirlineDetails")
+    dep=req.params.get("DEP")
+    arr=req.params.get("ARR")
+    date=req.params.get("DATE")
+    rk=req.params.get("RowKey")
+    pk=dep+arr+date
+
+    entity = table_client.get_entity(partition_key=pk,row_key=rk)
+
+    aircraft = entity["AIRCRAFT"]
+    airline = entity["AIRLINE"]
+    departure = entity["DEPT"]
+    arrival = entity["ARRT"]
+
+    prompt = f"""
+    You are the flight information assistant for GATEWATCH INDIA.
+
+    Give the traveller a concise, friendly and easy-to-read overview of this
+    specific flight:
+
+    Flight: {rk}
+    Airline: {airline}
+    Aircraft: {aircraft}
+    Route: {dep} → {arr}
+    Departure: {departure}
+    Arrival: {arrival}
+
+    The goal is to help a traveller understand what their journey will be like.
+
+    Cover the most useful information about:
+
+    - The aircraft and what it is like to fly on.
+    - The cabin classes that are normally available and the main difference
+    between them.
+    - Meals and drinks passengers can typically expect.
+    - Seats, entertainment, Wi-Fi/connectivity and charging facilities.
+    - The general passenger experience on this route.
+
+    IMPORTANT:
+    - Do NOT produce a long list of bullet points.
+    - Do NOT give a technical specification sheet.
+    - Use a natural, conversational style.
+    - Organize the answer into a few short sections with clear headings.
+    - Prefer short paragraphs over bullet points.
+    - Keep the entire response concise and easy to scan.
+    - Focus on information that is actually useful to a traveller.
+    - Mention only the most relevant aircraft specifications.
+    - Clearly distinguish between information that is typical and information
+    that is confirmed for this particular flight.
+    - Aircraft configurations, meals, seats, Wi-Fi and entertainment can vary
+    by airline and aircraft, so do not present typical information as
+    guaranteed.
+    - Do not invent information. If something cannot be reliably determined,
+    simply say that it may vary or is not available.
+
+    Suggested structure:
+
+    ### Your Flight
+    Briefly introduce the flight, airline, aircraft and route.
+
+    ### The Aircraft
+    Give a short, traveller-focused description of the aircraft and what
+    passengers can generally expect onboard.
+
+    ### Cabin & Service
+    Briefly explain the available cabin classes, seating experience,
+    meals/drinks and onboard services.
+
+    ### What to Expect
+    Give a short overall impression of the passenger experience on this
+    journey, including anything particularly useful for a traveller.
+
+    End with a one-sentence practical takeaway for the passenger.
+
+    Keep the response around 250–350 words maximum.
+    """
+    response = gemini_client.models.generate_content(
+    model="gemini-3.8-flash",
+    contents=prompt)
+
+    return func.HttpResponse(json.dumps({"analysis": response.text}),mimetype="application/json",status_code=200)
 
 @app.route(route="add_email",methods=['POST'])
 def add_email(req: func.HttpRequest) -> func.HttpResponse:
