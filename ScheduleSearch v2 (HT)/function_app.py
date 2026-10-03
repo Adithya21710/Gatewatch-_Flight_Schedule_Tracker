@@ -216,27 +216,22 @@ def fetch_flight_data(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="add_email",methods=['POST'])
 def add_email(req: func.HttpRequest) -> func.HttpResponse:
 
-    code = req.headers.get('code')   
-    e_code=os.environ.get('ACCESS_CODE')
-    if code==e_code:
-        data = req.get_json()
-        email = data.get("email", "").strip().lower()
-        if not email or "@" not in email:
-            return func.HttpResponse("Invalid email", status_code=400)
+    data = req.get_json()
+    email = data.get("email", "").strip().lower()
+    if not email or "@" not in email:
+        return func.HttpResponse("Invalid email", status_code=400)
 
-        if email in master_email:
-            return func.HttpResponse("Already subscribed", status_code=409)
+    if email in master_email:
+        return func.HttpResponse("Already subscribed", status_code=409)
 
-        CONTAINER_NAME = "gatewatchemail"
-        BLOB_NAME = "subscribers.json"
-        blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
-        blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
-        master_email=json.loads(blob.download_blob().readall())
-        master_email.append(email)
-        blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME).upload_blob(json.dumps(master_email), overwrite=True)
-        return func.HttpResponse("New Email added successfully", status_code=201)
-    else:
-        return func.HttpResponse("Access denied", status_code=403)
+    CONTAINER_NAME = "gatewatchemail"
+    BLOB_NAME = "subscribers.json"
+    blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+    blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+    master_email=json.loads(blob.download_blob().readall())
+    master_email.append(email)
+    blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME).upload_blob(json.dumps(master_email), overwrite=True)
+    return func.HttpResponse("New Email added successfully", status_code=201)
 
 
 @app.route(route="add_route", methods=['POST'])
