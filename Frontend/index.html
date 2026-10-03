@@ -111,6 +111,34 @@
     font-size: 8px;
   }
 
+  /* ---------- Subscribe button ---------- */
+  .subscribe-btn {
+    background: rgba(79, 209, 165, 0.10);
+    color: var(--teal);
+    border: 1px solid rgba(79, 209, 165, 0.42);
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .subscribe-btn::before {
+    content: "✉";
+    margin-right: 7px;
+    font-size: 12px;
+  }
+
+  .subscribe-btn:hover {
+    background: rgba(79, 209, 165, 0.16);
+    border-color: var(--teal);
+    transform: translateY(-1px);
+  }
+
+  .subscribe-btn:active { transform: translateY(0); }
+
   main {
     max-width: 880px;
     margin: 0 auto;
@@ -456,6 +484,180 @@
     margin: 0 0 22px;
   }
 
+  /* ---------- Subscription modal ---------- */
+  .subscribe-modal-title { color: var(--teal); }
+
+  .subscribe-modal .field input {
+    width: 100%;
+    color: var(--text);
+  }
+
+  .subscribe-submit-btn {
+    width: 100%;
+    margin-top: 4px;
+    background: var(--teal);
+    color: #10201A;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: filter .15s ease, transform .15s ease;
+  }
+
+  .subscribe-submit-btn:hover { filter: brightness(1.08); }
+  .subscribe-submit-btn:active { transform: translateY(1px); }
+
+  .envelope-stage {
+    position: relative;
+    height: 126px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  /* Stationary envelope with a letter rising out of it. */
+  .envelope-scene {
+    position: relative;
+    width: 150px;
+    height: 118px;
+  }
+
+  .envelope-paper {
+    position: absolute;
+    left: 50%;
+    bottom: 42px;
+    width: 78px;
+    height: 70px;
+    transform: translateX(-50%) translateY(34px);
+    background: #18231f;
+    border: 1px solid var(--teal);
+    border-radius: 2px;
+    opacity: 0;
+    z-index: 3;
+    box-shadow: 0 0 10px rgba(79,209,165,.14);
+  }
+
+  .envelope-paper::before,
+  .envelope-paper::after {
+    content: "";
+    position: absolute;
+    left: 11px;
+    right: 11px;
+    height: 1px;
+    background: rgba(79,209,165,.48);
+  }
+
+  .envelope-paper::before { top: 20px; }
+  .envelope-paper::after { top: 29px; right: 24px; }
+
+  .envelope {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    width: 112px;
+    height: 76px;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  .envelope-back {
+    position: absolute;
+    inset: 0;
+    background: rgba(79,209,165,.09);
+    border: 2px solid var(--teal);
+    border-radius: 5px;
+    box-shadow: 0 0 14px rgba(79,209,165,.12);
+  }
+
+  .envelope-flap {
+    position: absolute;
+    left: 2px;
+    top: 1px;
+    width: 0;
+    height: 0;
+    border-left: 54px solid transparent;
+    border-right: 54px solid transparent;
+    border-top: 54px solid var(--teal);
+    transform-origin: 50% 0;
+    transform: rotateX(0deg);
+    z-index: 5;
+  }
+
+  .envelope-flap::after {
+    content: "";
+    position: absolute;
+    left: -51px;
+    top: -51px;
+    width: 0;
+    height: 0;
+    border-left: 51px solid transparent;
+    border-right: 51px solid transparent;
+    border-top: 51px solid #1b2924;
+  }
+
+  .envelope-front {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background:
+      linear-gradient(135deg, transparent 49.3%, var(--teal) 49.5%, var(--teal) 50.5%, transparent 50.7%),
+      linear-gradient(225deg, transparent 49.3%, var(--teal) 49.5%, var(--teal) 50.5%, transparent 50.7%),
+      rgba(27, 41, 36, .88);
+    border-radius: 5px;
+    opacity: .95;
+  }
+
+  .envelope-scene.animate .envelope-paper {
+    animation: paper-rise 1.25s cubic-bezier(.2,.75,.25,1) .15s forwards;
+  }
+
+  .envelope-scene.animate .envelope-flap {
+    animation: envelope-open .65s cubic-bezier(.2,.75,.25,1) forwards;
+  }
+
+  .envelope-scene.animate .envelope-front {
+    animation: envelope-front-glow .65s ease forwards;
+  }
+
+  @keyframes envelope-open {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(180deg); }
+  }
+
+  @keyframes paper-rise {
+    0% { opacity: 0; transform: translateX(-50%) translateY(34px); }
+    18% { opacity: 1; }
+    100% { opacity: 1; transform: translateX(-50%) translateY(-15px); }
+  }
+
+  @keyframes envelope-front-glow {
+    0%, 100% { opacity: .82; }
+    50% { opacity: 1; }
+  }
+
+  .subscribe-success-note {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 11px;
+    line-height: 1.5;
+    margin: -3px 0 20px;
+  }
+
+  .subscribe-done-btn {
+    background: var(--teal);
+    color: #10201A;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .envelope-paper { opacity: 1; transform: translateX(-50%) translateY(-15px); }
+    .envelope-flap { transform: rotateX(180deg); }
+  }
+
   /* ---------- Delete confirmation modal ---------- */
   .delete-route-preview {
     font-family: var(--mono);
@@ -535,7 +737,7 @@
 
   .route-summary {
     display: grid;
-    grid-template-columns: 1fr 64px 1fr 140px 180px 180px;
+    grid-template-columns: 1fr 52px 1fr 120px 100px 150px;
     align-items: center;
     min-height: 150px;
     cursor: pointer;
@@ -742,12 +944,12 @@
     border-radius: 5px;
     background: var(--tile);
     padding: 12px;
-    overflow: visible;
+    overflow: hidden;
   }
 
   .flight-top {
     display: grid;
-    grid-template-columns: 180px 110px 1fr auto;
+    grid-template-columns: 180px 110px minmax(0, 1fr) 140px;
     align-items: center;
     gap: 14px;
   }
@@ -793,15 +995,18 @@
     color: var(--text-dim);
     font-family: var(--mono);
     font-size: 11px;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   /* ---------- 24-hour sky bar + flight journey ---------- */
   .timeline {
     position: relative;
+    width: 100%;
+    min-width: 0;
     height: 164px;
     margin-top: 0;
     overflow: visible;
-    min-width: 430px;
   }
 
   .flight-path-wrap {
@@ -924,19 +1129,57 @@
     text-overflow: ellipsis;
   }
 
-  .flight-end-label.departure {
-    transform: translateX(-100%);
-    text-align: right;
-    margin-left: -7px;
+  /* Keep each time label centered directly over its corresponding pin. */
+  .flight-end-label.departure,
+  .flight-end-label.arrival {
+    transform: translateX(-50%);
+    text-align: center;
+    margin-left: 0;
   }
 
-  .flight-end-label.arrival {
+  /* Near the extreme edges, keep the text inside the timeline. */
+  .flight-end-label.edge-left {
     transform: translateX(0);
     text-align: left;
-    margin-left: 7px;
+  }
+
+  .flight-end-label.edge-right {
+    transform: translateX(-100%);
+    text-align: right;
   }
 
   .flight-end-label.next-day { color: var(--teal); }
+
+  /* When departure and arrival are close together, stack the endpoint labels
+     instead of allowing the times to collide. */
+  .timeline.compact-endpoints .flight-end-label.departure {
+    top: 0;
+  }
+
+  .timeline.compact-endpoints .flight-end-label.arrival {
+    top: 14px;
+  }
+
+  .timeline.compact-endpoints .flight-duration {
+    top: 31px;
+  }
+
+  .timeline.compact-endpoints .flight-air-icon {
+    top: 48px;
+  }
+
+  .timeline.compact-endpoints .flight-journey-line,
+  .timeline.compact-endpoints .flight-journey-segment {
+    top: 64px;
+  }
+
+  .timeline.compact-endpoints .flight-path-rail {
+    top: 92px;
+  }
+
+  .timeline.compact-endpoints .flight-marker {
+    top: 86px;
+  }
 
   /* Dedicated row 5: local airport time zones. */
   .flight-timezone {
@@ -954,22 +1197,44 @@
     text-overflow: ellipsis;
   }
 
-  .flight-timezone.departure {
-    transform: translateX(-100%);
-    text-align: right;
-    margin-left: -5px;
+  /* Time-zone labels follow the same pin alignment as the flight times. */
+  .flight-timezone.departure,
+  .flight-timezone.arrival {
+    transform: translateX(-50%);
+    text-align: center;
+    margin-left: 0;
   }
 
-  .flight-timezone.arrival {
+  .flight-timezone.edge-left {
     transform: translateX(0);
     text-align: left;
-    margin-left: 5px;
+  }
+
+  .flight-timezone.edge-right {
+    transform: translateX(-100%);
+    text-align: right;
   }
 
   /* Never let the two endpoint timezone labels occupy the same visual row
      when the flight is short. */
   .flight-timezone {
     line-height: 12px;
+  }
+
+  .timeline.compact-endpoints .flight-timezone.departure {
+    top: 120px;
+  }
+
+  .timeline.compact-endpoints .flight-timezone.arrival {
+    top: 134px;
+  }
+
+  .timeline.compact-endpoints .sky-tick {
+    top: 149px;
+  }
+
+  .timeline.compact-endpoints {
+    height: 181px;
   }
 
   /* Dedicated row 2: duration. */
@@ -1080,40 +1345,62 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 6px;
-    padding: 0 12px 0 0 !important;
+    gap: 7px;
+    min-width: 0;
+    padding: 0 10px 0 0 !important;
   }
 
   .ai-price-btn,
   .aircraft-info-btn {
-    background: transparent;
-    border: 1px solid var(--hairline);
-    color: var(--text-dim);
-    border-radius: 4px;
+    box-sizing: border-box;
+    border-radius: 5px;
     font-family: var(--sans);
     font-weight: 600;
-    font-size: 10px;
-    line-height: 1.1;
-    padding: 7px 9px;
+    font-size: 9px;
+    line-height: 1.15;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-    white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
   }
 
   .ai-price-btn {
+    width: 126px;
+    padding: 8px 10px;
+    background: linear-gradient(180deg, rgba(242,169,59,.10), rgba(242,169,59,.03));
+    border: 1px solid var(--amber-dim);
     color: var(--amber);
-    border-color: var(--amber-dim);
+    letter-spacing: .045em;
+    text-transform: uppercase;
+    box-shadow: inset 0 0 0 1px rgba(242,169,59,.03);
+  }
+
+  .ai-price-btn::before {
+    content: "✦";
+    margin-right: 6px;
+    font-size: 10px;
   }
 
   .ai-price-btn:hover {
-    background: rgba(242, 169, 59, 0.08);
+    background: rgba(242, 169, 59, 0.12);
     border-color: var(--amber);
+    transform: translateY(-1px);
+  }
+
+  .aircraft-info-btn {
+    width: 100%;
+    max-width: 140px;
+    padding: 8px 7px;
+    background: rgba(79, 209, 165, 0.025);
+    border: 1px solid var(--hairline);
+    color: var(--text-dim);
+    white-space: normal;
+    text-align: center;
   }
 
   .aircraft-info-btn:hover {
     background: rgba(79, 209, 165, 0.08);
     border-color: var(--teal);
     color: var(--teal);
+    transform: translateY(-1px);
   }
 
   .delete-btn {
@@ -1163,6 +1450,78 @@
 
   @media (prefers-reduced-motion: reduce) {
     .route-card { animation: none; }
+  }
+
+
+  /* ---------- AI analysis modal ---------- */
+  .ai-analysis-modal {
+    max-width: 680px;
+  }
+
+  .ai-analysis-title {
+    color: var(--amber);
+  }
+
+  .ai-analysis-content {
+    max-height: 60vh;
+    overflow-y: auto;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 4px 2px 2px;
+  }
+
+  .ai-analysis-content h1,
+  .ai-analysis-content h2,
+  .ai-analysis-content h3 {
+    font-family: var(--mono);
+    color: var(--amber);
+    font-size: 12px;
+    letter-spacing: .08em;
+    margin: 16px 0 7px;
+  }
+
+  .ai-analysis-content h1:first-child,
+  .ai-analysis-content h2:first-child,
+  .ai-analysis-content h3:first-child {
+    margin-top: 0;
+  }
+
+  .ai-analysis-content p {
+    margin: 0 0 11px;
+  }
+
+  .ai-analysis-content ul,
+  .ai-analysis-content ol {
+    margin: 0 0 12px 20px;
+    padding: 0;
+  }
+
+  .ai-analysis-content li {
+    margin-bottom: 5px;
+  }
+
+  .ai-analysis-content strong {
+    color: var(--text);
+  }
+
+  .ai-analysis-loading {
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-align: center;
+    padding: 28px 10px;
+  }
+
+  .ai-analysis-error {
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 12px;
+    border: 1px solid rgba(225,85,79,.3);
+    background: rgba(225,85,79,.06);
+    border-radius: 5px;
   }
 
   /* ---------- Mobile ---------- */
@@ -1220,6 +1579,7 @@
     }
 
     .timeline { min-width: 190px; height: 164px; }
+    .timeline.compact-endpoints { height: 181px; }
 
     .airport-name { font-size: 10px; }
   }
@@ -1229,9 +1589,22 @@
 
     header {
       padding: 20px 16px 18px;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .tagline {
+      display: none;
+    }
+
+    .subscribe-btn {
+      flex: 0 0 auto;
     }
 
     h1 { font-size: 21px; letter-spacing: 0.08em; }
@@ -1274,6 +1647,7 @@
       <h1>GATEWATCH INDIA</h1>
       <span class="tagline">Flight frequency tracker</span>
     </div>
+    <button type="button" class="subscribe-btn" id="subscribe-btn" aria-haspopup="dialog">Subscribe</button>
   </header>
 </div>
 
@@ -1281,6 +1655,56 @@
 
   <div class="toolbar">
     <button type="button" id="toggle-add">+ Track new route</button>
+  </div>
+
+  <div class="modal-overlay" id="ai-analysis-overlay">
+    <div class="modal ai-analysis-modal" role="dialog" aria-modal="true" aria-labelledby="ai-analysis-title">
+      <div class="modal-title-row">
+        <span class="modal-title ai-analysis-title" id="ai-analysis-title">AI ANALYSIS</span>
+        <button type="button" class="modal-close" id="ai-analysis-close" aria-label="Close">×</button>
+      </div>
+      <p class="modal-sub" id="ai-analysis-subtitle">GATEWATCH AI</p>
+      <div class="ai-analysis-content" id="ai-analysis-content"></div>
+      <button type="button" id="ai-analysis-done-btn" class="modal-done-btn" style="width:100%;margin-top:16px">Done</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="subscribe-overlay">
+    <div class="modal subscribe-modal" role="dialog" aria-modal="true" aria-labelledby="subscribe-modal-title">
+      <div class="modal-title-row">
+        <span class="modal-title subscribe-modal-title" id="subscribe-modal-title">SUBSCRIBE TO ALERTS</span>
+        <button type="button" class="modal-close" id="subscribe-modal-close" aria-label="Close">×</button>
+      </div>
+      <p class="modal-sub">Get email updates when tracked flight prices or route frequency changes.</p>
+      <form id="subscribe-form">
+        <div class="field">
+          <label for="subscriber-email">Email address</label>
+          <input type="email" id="subscriber-email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+
+        <button type="submit" class="subscribe-submit-btn" id="subscribe-submit-btn">Add subscription</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="subscribe-success-overlay">
+    <div class="modal subscribe-success-modal" role="dialog" aria-modal="true" aria-labelledby="subscribe-success-title">
+      <div class="envelope-stage" aria-hidden="true">
+        <div class="envelope-scene" id="envelope-scene">
+          <div class="envelope-paper"></div>
+          <div class="envelope">
+            <div class="envelope-back"></div>
+            <div class="envelope-flap"></div>
+            <div class="envelope-front"></div>
+          </div>
+        </div>
+      </div>
+      <div class="success-check" id="subscribe-success-check">✓</div>
+      <p class="success-title" id="subscribe-success-title">Subscription added</p>
+      <p class="success-route" id="subscribe-success-email">you@example.com</p>
+      <p class="subscribe-success-note" id="subscribe-success-note">You’ll receive email updates about prices, frequency, and flight changes.</p>
+      <button type="button" id="subscribe-success-done-btn" class="modal-done-btn subscribe-done-btn" style="width:100%">Done</button>
+    </div>
   </div>
 
   <div class="modal-overlay" id="add-overlay">
@@ -1379,6 +1803,79 @@
   const board = document.getElementById('board');
   const routeCount = document.getElementById('route-count');
   const emptyState = document.getElementById('empty-state');
+
+  // ---------- AI analysis modal ----------
+  const aiAnalysisOverlay = document.getElementById('ai-analysis-overlay');
+  const aiAnalysisTitle = document.getElementById('ai-analysis-title');
+  const aiAnalysisSubtitle = document.getElementById('ai-analysis-subtitle');
+  const aiAnalysisContent = document.getElementById('ai-analysis-content');
+
+  function escapeHtmlText(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function renderAIAnalysis(text) {
+    const safe = escapeHtmlText(text || "No analysis was returned.");
+
+    // Convert the limited Markdown formatting expected from Gemini into
+    // readable HTML without injecting raw model output into the page.
+    return safe
+      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/^\s*[-*]\s+(.+)$/gm, "<li>$1</li>")
+      .replace(/(<li>.*<\/li>)(?!\s*<li>)/gs, "$1")
+      .split(/\n{2,}/)
+      .map(block => {
+        if (/^\s*<(h[1-3]|li)>/.test(block)) return block;
+        return `<p>${block.replace(/\n/g, "<br>")}</p>`;
+      })
+      .join("");
+  }
+
+  async function showAIAnalysis(url, subtitle) {
+    aiAnalysisTitle.textContent = "AI ANALYSIS";
+    aiAnalysisSubtitle.textContent = subtitle;
+    aiAnalysisContent.innerHTML = `<div class="ai-analysis-loading">ANALYZING…</div>`;
+    openModal(aiAnalysisOverlay);
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || `Request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.analysis) {
+        throw new Error("The AI endpoint returned no analysis.");
+      }
+
+      aiAnalysisContent.innerHTML = renderAIAnalysis(data.analysis);
+    } catch (error) {
+      console.error("AI analysis request failed:", error);
+      aiAnalysisContent.innerHTML =
+        `<div class="ai-analysis-error">Unable to load AI analysis.<br><br>${escapeHtmlText(error.message)}</div>`;
+    }
+  }
+
+  document.getElementById('ai-analysis-close').addEventListener('click', () => {
+    closeModal(aiAnalysisOverlay);
+  });
+
+  document.getElementById('ai-analysis-done-btn').addEventListener('click', () => {
+    closeModal(aiAnalysisOverlay);
+  });
+
+
   const accessCodeInput = document.getElementById('access-code');
 
   // Reads the code fresh at the moment of each request — nothing is
@@ -2047,22 +2544,22 @@
     }
 
     return `
-      <div class="timeline" aria-label="24 hour local-time sky with departure ${escapeHtml(formatTime(departure))} ${escapeHtml(depTZ)} and arrival ${escapeHtml(formatTime(arrival))} ${escapeHtml(arrTZ)}${overnight ? ' next day' : ''}">
+      <div class="timeline${(!overnight && Math.abs(arrPct - depPct) < 18) ? ' compact-endpoints' : ''}" aria-label="24 hour local-time sky with departure ${escapeHtml(formatTime(departure))} ${escapeHtml(depTZ)} and arrival ${escapeHtml(formatTime(arrival))} ${escapeHtml(arrTZ)}${overnight ? ' next day' : ''}">
         <div class="flight-path-wrap">
 
           ${journey}
 
-          <div class="flight-end-label departure" style="left:clamp(92px, ${depPct}%, calc(100% - 54px))">
+          <div class="flight-end-label departure ${depPct < 7 ? 'edge-left' : depPct > 93 ? 'edge-right' : ''}" style="left:${depPct}%">
             ${escapeHtml(formatTime(departure))}
           </div>
-          <div class="flight-end-label arrival ${overnight ? 'next-day' : ''}" style="left:clamp(54px, ${arrPct}%, calc(100% - 92px))">
+          <div class="flight-end-label arrival ${overnight ? 'next-day' : ''} ${arrPct < 7 ? 'edge-left' : arrPct > 93 ? 'edge-right' : ''}" style="left:${arrPct}%">
             ${escapeHtml(arrivalLabel)}
           </div>
 
-          <div class="flight-timezone departure" style="left:clamp(120px, ${depPct}%, calc(100% - 60px))">
+          <div class="flight-timezone departure ${depPct < 7 ? 'edge-left' : depPct > 93 ? 'edge-right' : ''}" style="left:${depPct}%">
             ${escapeHtml(depTZ)}
           </div>
-          <div class="flight-timezone arrival" style="left:clamp(60px, ${arrPct}%, calc(100% - 120px))">
+          <div class="flight-timezone arrival ${arrPct < 7 ? 'edge-left' : arrPct > 93 ? 'edge-right' : ''}" style="left:${arrPct}%">
             ${escapeHtml(arrTZ)}
           </div>
 
@@ -2285,6 +2782,91 @@
   const addOverlay = document.getElementById('add-overlay');
   const addForm = document.getElementById('add-route');
 
+  // ---------- Subscription modal ----------
+  const subscribeBtn = document.getElementById('subscribe-btn');
+  const subscribeOverlay = document.getElementById('subscribe-overlay');
+  const subscribeForm = document.getElementById('subscribe-form');
+  const subscriberEmail = document.getElementById('subscriber-email');
+  const subscribeSuccessOverlay = document.getElementById('subscribe-success-overlay');
+  const envelopeScene = document.getElementById('envelope-scene');
+  const subscribeSuccessCheck = document.getElementById('subscribe-success-check');
+  const subscribeSuccessEmail = document.getElementById('subscribe-success-email');
+  const subscribeSuccessNote = document.getElementById('subscribe-success-note');
+
+  subscribeBtn.addEventListener('click', () => {
+    openModal(subscribeOverlay, subscriberEmail);
+  });
+
+  document.getElementById('subscribe-modal-close').addEventListener('click', () => {
+    closeModal(subscribeOverlay);
+  });
+
+  subscribeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = subscriberEmail.value.trim();
+    if (!email || !subscriberEmail.checkValidity()) {
+      subscriberEmail.classList.add('invalid');
+      subscriberEmail.focus();
+      setTimeout(() => subscriberEmail.classList.remove('invalid'), 300);
+      return;
+    }
+
+    try {
+      // BACKEND API CALL — add_email
+      // Expected backend: POST /add_email with { email }
+      const response = await fetch(`${API_BASE}/add_email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          alert("This email is already subscribed.");
+        } else if (response.status === 403) {
+          alert("Subscription was denied by the server. The add_email endpoint currently requires an access code.");
+        } else {
+          alert(responseText || "Unable to add subscription.");
+        }
+        return;
+      }
+
+      closeModal(subscribeOverlay);
+      showSubscribeSuccess(email);
+    } catch (error) {
+      console.error("Unable to subscribe:", error);
+      alert("Unable to connect to the subscription service.");
+    }
+  });
+
+  function showSubscribeSuccess(email) {
+    subscribeSuccessEmail.textContent = email;
+    subscribeSuccessNote.textContent = 'You’ll receive email updates about prices, frequency, and flight changes.';
+
+    subscribeSuccessCheck.classList.remove('show');
+    envelopeScene.classList.remove('animate');
+    envelopeScene.getBoundingClientRect();
+    openModal(subscribeSuccessOverlay);
+    envelopeScene.classList.add('animate');
+
+    const revealCheck = () => subscribeSuccessCheck.classList.add('show');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      revealCheck();
+    } else {
+      envelopeScene.querySelector('.envelope-paper').addEventListener('animationend', revealCheck, { once: true });
+    }
+  }
+
+  document.getElementById('subscribe-success-done-btn').addEventListener('click', () => {
+    closeModal(subscribeSuccessOverlay);
+    subscribeForm.reset();
+  });
+
   toggleBtn.addEventListener('click', () => {
     openModal(addOverlay, document.getElementById('dep'));
   });
@@ -2315,7 +2897,10 @@
       const dep = card?.dataset.dep || "";
       const arr = card?.dataset.arr || "";
       const date = card?.dataset.date || "";
-      alert(`AI price analysis for ${dep} → ${arr} on ${date} will be connected to the AI pricing endpoint.`);
+      await showAIAnalysis(
+        `${API_BASE}/fetch_price_data?DEP=${encodeURIComponent(dep)}&ARR=${encodeURIComponent(arr)}&DATE=${encodeURIComponent(date)}`,
+        `PRICE ANALYSIS · ${dep} → ${arr} · ${date}`
+      );
       return;
     }
 
@@ -2323,9 +2908,17 @@
 
     if (aircraftBtn) {
       e.stopPropagation();
+      const card = aircraftBtn.closest('.route-card');
+      const dep = card?.dataset.dep || "";
+      const arr = card?.dataset.arr || "";
+      const date = card?.dataset.date || "";
       const aircraft = aircraftBtn.dataset.aircraft || "Aircraft unavailable";
       const flightNumber = aircraftBtn.dataset.flightNumber || "";
-      alert(`Aircraft: ${aircraft}${flightNumber ? `\nFlight: ${flightNumber}` : ""}\n\nAircraft information will be connected to the aircraft information service.`);
+
+      await showAIAnalysis(
+        `${API_BASE}/fetch_flight_data?DEP=${encodeURIComponent(dep)}&ARR=${encodeURIComponent(arr)}&DATE=${encodeURIComponent(date)}&RowKey=${encodeURIComponent(flightNumber)}`,
+        `FLIGHT INFORMATION · ${flightNumber || aircraft}`
+      );
       return;
     }
 
