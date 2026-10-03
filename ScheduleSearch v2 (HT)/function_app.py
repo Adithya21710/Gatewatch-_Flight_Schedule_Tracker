@@ -76,7 +76,7 @@ def fetch_flight(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse(json.dumps(routelist2), status_code=200)
 
 @app.route(route="fetch_price_data",methods=['GET'])
-def fetch__price_data(req: func.HttpRequest) -> func.HttpResponse:
+def fetch_price_data(req: func.HttpRequest) -> func.HttpResponse:
     gemini_client = genai.Client(api_key=os.environ["Gemini_API"])
     table_service = TableServiceClient.from_connection_string(conn_str=storage_key)
     table_client = table_service.get_table_client("MasterTable")
@@ -128,7 +128,7 @@ def fetch__price_data(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse(json.dumps({"analysis": response.text}),mimetype="application/json",status_code=200)
 
 @app.route(route="fetch_flight_data",methods=['GET'])
-def fetch__flight_data(req: func.HttpRequest) -> func.HttpResponse:
+def fetch_flight_data(req: func.HttpRequest) -> func.HttpResponse:
     gemini_client = genai.Client(api_key=os.environ["Gemini_API"])
     table_service = TableServiceClient.from_connection_string(conn_str=storage_key)
     table_client = table_service.get_table_client("AirlineDetails")
