@@ -216,14 +216,6 @@ def fetch_flight_data(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="add_email",methods=['POST'])
 def add_email(req: func.HttpRequest) -> func.HttpResponse:
 
-    data = req.get_json()
-    email = data.get("email", "").strip().lower()
-    if not email or "@" not in email:
-        return func.HttpResponse("Invalid email", status_code=400)
-
-    if email in master_email:
-        return func.HttpResponse("Already subscribed", status_code=409)
-
     CONTAINER_NAME = "gatewatchemail"
     BLOB_NAME = "subscribers.json"
     blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
@@ -231,6 +223,16 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
     master_email=json.loads(blob.download_blob().readall())
     master_email.append(email)
     blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME).upload_blob(json.dumps(master_email), overwrite=True)
+
+    data = req.get_json()
+    email = data.get("email", "").strip().lower()
+    
+    if not email or "@" not in email:
+        return func.HttpResponse("Invalid email", status_code=400)
+
+    if email in master_email:
+        return func.HttpResponse("Already subscribed", status_code=409)
+    
     return func.HttpResponse("New Email added successfully", status_code=201)
 
 
@@ -327,7 +329,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
             
         
         try:
-            table_client.create_entity(new_entity)
+            table_client.upsert_entity(new_entity)
         except ResourceExistsError:
             return func.HttpResponse("This route and date is already being tracked", status_code=409)
 
