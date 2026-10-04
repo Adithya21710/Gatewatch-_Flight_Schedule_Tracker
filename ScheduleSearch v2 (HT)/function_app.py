@@ -86,7 +86,7 @@ def fetch_price_data(req: func.HttpRequest) -> func.HttpResponse:
     rk=dep+arr+date
 
     entity = table_client.get_entity(partition_key="Route",row_key=rk)
-    price_history = entity["PRICE_LEVEL"]
+    price_history = entity["PRICE_HISTORY"]
 
     prompt = f"""
     You are the price-analysis AI for GATEWATCH INDIA.
@@ -122,7 +122,7 @@ def fetch_price_data(req: func.HttpRequest) -> func.HttpResponse:
     - Keep the final assessment concise and useful to a traveller.
     """
     response = gemini_client.models.generate_content(
-    model="gemini-3.8-flash",
+    model="gemini-3.1-flash-lite",
     contents=prompt)
 
     return func.HttpResponse(json.dumps({"analysis": response.text}),mimetype="application/json",status_code=200)
@@ -197,7 +197,7 @@ def fetch_flight_data(req: func.HttpRequest) -> func.HttpResponse:
 
     ### Cabin & Service
     Briefly explain the available cabin classes, seating experience,
-    meals/drinks and onboard services.
+    meals/drinks, onboard services and passenger reviews of this specific aircraft and reviews about the airline.
 
     ### What to Expect
     Give a short overall impression of the passenger experience on this
@@ -208,7 +208,7 @@ def fetch_flight_data(req: func.HttpRequest) -> func.HttpResponse:
     Keep the response around 250–350 words maximum.
     """
     response = gemini_client.models.generate_content(
-    model="gemini-3.8-flash",
+    model="gemini-3.1-flash-lite",
     contents=prompt)
 
     return func.HttpResponse(json.dumps({"analysis": response.text}),mimetype="application/json",status_code=200)
