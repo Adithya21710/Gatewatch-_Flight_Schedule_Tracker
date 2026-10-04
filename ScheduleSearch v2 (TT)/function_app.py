@@ -601,7 +601,7 @@ def dictcheck():
 
 
 
-@app.timer_trigger(schedule="* * * * * *", arg_name="myTimer", run_on_startup=False,
+@app.timer_trigger(schedule="0 3 30 * * *", arg_name="myTimer", run_on_startup=False,
               use_monitor=False) 
 def timer_trigger(myTimer: func.TimerRequest) -> None:
     if myTimer.past_due:
