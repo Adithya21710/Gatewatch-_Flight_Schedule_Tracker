@@ -573,7 +573,7 @@ def dictcheck():
                                 "DEPT":flight_data["DEPT"],
                                 "ARRT":flight_data["ARRT"],
                                 "AIRLINE_LOGO":flight_data["AIRLINE_LOGO"],
-                                "TIME":flight_data["Duration"]}
+                                "TIME":flight_data["TIME"]}
                 emailfreq(dep,arr,date1,flight_number,flight_data["AIRLINE"],flight_data["AIRCRAFT"],flight_data["DEPT"],flight_data["ARRT"],flight_data["AIRLINE_LOGO"])
              
 
