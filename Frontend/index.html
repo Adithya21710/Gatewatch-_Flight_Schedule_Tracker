@@ -760,7 +760,9 @@
     grid-column: 1 / -1;
     grid-row: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+    /* Two rectangular photos meet directly at the center.
+       The diagonal route line is only an overlay; it never clips or skews either photo. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     min-height: 210px;
     overflow: hidden;
   }
@@ -806,11 +808,13 @@
   }
 
   .airport-photo:first-child {
-    border-right: 1px solid rgba(255,255,255,.06);
+    grid-column: 1;
+    border-right: 0;
   }
 
   .airport-photo:nth-child(3) {
-    border-left: 1px solid rgba(255,255,255,.06);
+    grid-column: 2;
+    border-left: 0;
   }
 
   .airport-label {
@@ -847,17 +851,20 @@
   }
 
   .route-arrow {
-    position: relative;
-    z-index: 5;
-    grid-column: 2;
-    grid-row: 1;
+    position: absolute;
+    z-index: 6;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--amber);
     font-family: var(--mono);
     font-size: 24px;
+    line-height: 1;
     pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0,0,0,.8);
   }
 
   .route-meta {
@@ -897,12 +904,13 @@
     grid-row: 2;
     padding: 0 22px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 3px;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
     font-family: var(--mono);
     border-top: 1px solid var(--hairline);
+    white-space: nowrap;
   }
 
   .route-stat strong {
@@ -925,7 +933,7 @@
     margin-right: 10px;
     border: 1px solid var(--hairline);
     border-radius: 4px;
-    background: transparent;
+    background: rgba(16, 20, 24, 0.94);
     color: var(--amber);
     font-family: var(--mono);
     cursor: pointer;
@@ -1406,8 +1414,8 @@
 
   .row-actions {
     position: absolute;
-    right: 10px;
-    bottom: 82px;
+    right: 14px;
+    top: 14px;
     z-index: 10;
     display: flex;
     align-items: center;
@@ -1420,6 +1428,7 @@
   .ai-price-btn,
   .aircraft-info-btn {
     box-sizing: border-box;
+    backdrop-filter: blur(3px);
     border-radius: 5px;
     font-family: var(--sans);
     font-weight: 600;
@@ -1432,7 +1441,7 @@
   .ai-price-btn {
     width: 126px;
     padding: 8px 10px;
-    background: linear-gradient(180deg, rgba(242,169,59,.10), rgba(242,169,59,.03));
+    background: rgba(16, 20, 24, 0.94);
     border: 1px solid var(--amber-dim);
     color: var(--amber);
     letter-spacing: .045em;
@@ -1471,7 +1480,7 @@
   }
 
   .delete-btn {
-    background: transparent;
+    background: rgba(16, 20, 24, 0.94);
     border: 1px solid var(--hairline);
     color: var(--red);
     border-radius: 4px;
@@ -1599,7 +1608,7 @@
     }
 
     .route-visual {
-      grid-template-columns: 1fr 34px 1fr;
+      grid-template-columns: 1fr 1fr;
       min-height: 180px;
     }
 
@@ -1630,11 +1639,13 @@
       grid-row: 2;
       padding: 10px 14px;
       align-items: flex-end;
+      flex-direction: row;
+      white-space: nowrap;
     }
 
     .row-actions {
       right: 8px;
-      bottom: 66px;
+      top: 8px;
     }
 
     .cheapest {
