@@ -728,30 +728,63 @@
     overflow: hidden;
   }
 
-  .route-card {
-    background: var(--tile);
-    border-bottom: 1px solid var(--hairline);
+  .board {
+    border: none;
+    overflow: visible;
   }
 
-  .route-card:last-child { border-bottom: none; }
+  .route-card {
+    position: relative;
+    background: var(--tile);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .route-card:last-child { margin-bottom: 0; }
 
   .route-summary {
     display: grid;
-    grid-template-columns: 1fr 52px 1fr 120px 100px 150px;
-    align-items: center;
-    min-height: 150px;
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+    grid-template-rows: 210px 66px;
+    align-items: stretch;
     cursor: pointer;
     transition: background 0.15s ease;
   }
 
   .route-summary:hover { background: #15191C; }
 
+  .route-visual {
+    position: relative;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+    min-height: 210px;
+    overflow: hidden;
+  }
+
+  .route-visual::after {
+    content: "";
+    position: absolute;
+    top: -18%;
+    left: 50%;
+    width: 2px;
+    height: 136%;
+    background: rgba(232,230,225,.45);
+    transform: rotate(20deg);
+    transform-origin: center;
+    pointer-events: none;
+    z-index: 4;
+  }
+
   .airport-photo {
     position: relative;
-    height: 112px;
-    margin: 12px;
-    border: 1px solid var(--hairline);
-    border-radius: 5px;
+    height: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
     background: #171B1D;
   }
@@ -768,48 +801,73 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.76));
+    background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.78));
+    z-index: 0;
+  }
+
+  .airport-photo:first-child {
+    border-right: 1px solid rgba(255,255,255,.06);
+  }
+
+  .airport-photo:nth-child(3) {
+    border-left: 1px solid rgba(255,255,255,.06);
   }
 
   .airport-label {
     position: absolute;
-    z-index: 1;
-    left: 12px;
-    right: 12px;
-    bottom: 9px;
+    z-index: 2;
+    left: 24px;
+    right: 24px;
+    bottom: 18px;
     color: var(--text);
+  }
+
+  .airport-photo:nth-child(3) .airport-label {
+    text-align: right;
   }
 
   .airport-code {
     display: block;
     font-family: var(--mono);
-    font-size: 18px;
+    font-size: 28px;
     font-weight: 700;
     color: var(--amber);
     letter-spacing: 0.08em;
+    text-shadow: 0 1px 8px rgba(0,0,0,.55);
   }
 
   .airport-name {
     display: block;
-    margin-top: 2px;
+    margin-top: 4px;
     font-family: var(--sans);
-    font-size: 11px;
-    line-height: 1.2;
+    font-size: 13px;
+    line-height: 1.25;
     color: var(--text);
+    text-shadow: 0 1px 7px rgba(0,0,0,.65);
   }
 
   .route-arrow {
-    text-align: center;
+    position: relative;
+    z-index: 5;
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--amber);
     font-family: var(--mono);
-    font-size: 20px;
+    font-size: 24px;
+    pointer-events: none;
   }
 
   .route-meta {
-    padding: 0 12px;
+    grid-column: 1 / 2;
+    grid-row: 2;
+    padding: 0 22px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 8px;
+    border-top: 1px solid var(--hairline);
   }
 
   .meta-line {
@@ -835,11 +893,16 @@
   }
 
   .route-stat {
-    padding: 0 12px;
+    grid-column: 2 / 4;
+    grid-row: 2;
+    padding: 0 22px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
     gap: 3px;
     font-family: var(--mono);
+    border-top: 1px solid var(--hairline);
   }
 
   .route-stat strong {
@@ -1342,12 +1405,16 @@
   }
 
   .row-actions {
+    position: absolute;
+    right: 10px;
+    bottom: 82px;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 7px;
     min-width: 0;
-    padding: 0 10px 0 0 !important;
+    padding: 0 !important;
   }
 
   .ai-price-btn,
@@ -1527,34 +1594,47 @@
   /* ---------- Mobile ---------- */
   @media (max-width: 760px) {
     .route-summary {
-      grid-template-columns: 1fr 36px 1fr;
-      min-height: 0;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 180px auto;
+    }
+
+    .route-visual {
+      grid-template-columns: 1fr 34px 1fr;
+      min-height: 180px;
     }
 
     .airport-photo {
-      height: 120px;
-      margin: 10px 6px;
+      height: 100%;
+      margin: 0;
     }
+
+    .airport-label {
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+    }
+
+    .airport-code { font-size: 21px; }
+    .airport-name { font-size: 10px; }
 
     .route-arrow { font-size: 17px; }
 
-    .route-meta,
-    .route-stat {
-      grid-column: 1 / -1;
-      padding: 8px 14px;
+    .route-meta {
+      grid-column: 1 / 2;
+      grid-row: 2;
+      padding: 10px 14px;
     }
 
-    .route-meta {
-      flex-direction: row;
-      flex-wrap: wrap;
-      border-top: 1px solid var(--hairline);
+    .route-stat {
+      grid-column: 2 / 3;
+      grid-row: 2;
+      padding: 10px 14px;
+      align-items: flex-end;
     }
 
     .row-actions {
-      grid-column: 1 / -1;
-      justify-content: flex-end;
-      padding: 8px 14px !important;
-      border-top: 1px solid var(--hairline);
+      right: 8px;
+      bottom: 66px;
     }
 
     .cheapest {
@@ -1620,13 +1700,12 @@
 
     .board-heading { margin: 26px 0 8px; }
 
-    .airport-photo {
-      height: 100px;
-      margin: 8px 4px;
-    }
-
-    .airport-code { font-size: 15px; }
+    .route-visual { min-height: 160px; }
+    .route-summary { grid-template-rows: 160px auto; }
+    .airport-photo { height: 100%; margin: 0; }
+    .airport-code { font-size: 18px; }
     .airport-name { font-size: 9px; }
+    .route-meta, .route-stat { font-size: 11px; }
   }
 
   /* ---------- Small phones ---------- */
@@ -2674,21 +2753,23 @@
       <div class="route-summary" role="button" tabindex="0"
            aria-expanded="false"
            aria-label="${escapeHtml(dep)} to ${escapeHtml(arr)}">
-        <div class="airport-photo">
-          ${route.DEP_IMG ? `<img src="${escapeHtml(route.DEP_IMG)}" alt="${escapeHtml(dep)} airport" onerror="this.style.display='none'">` : ""}
-          <div class="airport-label">
-            <span class="airport-code">${escapeHtml(dep)}</span>
-            <span class="airport-name">${escapeHtml(airportName(dep))}</span>
+        <div class="route-visual">
+          <div class="airport-photo">
+            ${route.DEP_IMG ? `<img src="${escapeHtml(route.DEP_IMG)}" alt="${escapeHtml(dep)} airport" onerror="this.style.display='none'">` : ""}
+            <div class="airport-label">
+              <span class="airport-code">${escapeHtml(dep)}</span>
+              <span class="airport-name">${escapeHtml(airportName(dep))}</span>
+            </div>
           </div>
-        </div>
 
-        <div class="route-arrow">→</div>
+          <div class="route-arrow">→</div>
 
-        <div class="airport-photo">
-          ${route.ARR_IMG ? `<img src="${escapeHtml(route.ARR_IMG)}" alt="${escapeHtml(arr)} airport" onerror="this.style.display='none'">` : ""}
-          <div class="airport-label">
-            <span class="airport-code">${escapeHtml(arr)}</span>
-            <span class="airport-name">${escapeHtml(airportName(arr))}</span>
+          <div class="airport-photo">
+            ${route.ARR_IMG ? `<img src="${escapeHtml(route.ARR_IMG)}" alt="${escapeHtml(arr)} airport" onerror="this.style.display='none'">` : ""}
+            <div class="airport-label">
+              <span class="airport-code">${escapeHtml(arr)}</span>
+              <span class="airport-name">${escapeHtml(airportName(arr))}</span>
+            </div>
           </div>
         </div>
 

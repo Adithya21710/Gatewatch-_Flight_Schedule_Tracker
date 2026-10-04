@@ -221,8 +221,7 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
     blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
     blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
     master_email=json.loads(blob.download_blob().readall())
-    master_email.append(email)
-    blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME).upload_blob(json.dumps(master_email), overwrite=True)
+    
 
     data = req.get_json()
     email = data.get("email", "").strip().lower()
@@ -232,7 +231,144 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
 
     if email in master_email:
         return func.HttpResponse("Already subscribed", status_code=409)
+
     
+    master_email.append(email)
+    blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME).upload_blob(json.dumps(master_email), overwrite=True)
+    message = {
+                "senderAddress": "DoNotReply@b69c3249-d05b-47d9-a9a3-9fc4b60755d6.azurecomm.net",
+                "recipients": {
+                    "bcc": [{"address": email}]
+                },
+                "content": {
+                    "subject": "Your subscription is confirmed!",
+                    "html": f"""
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+
+                    <body style="
+                        margin:0;
+                        padding:0;
+                        background-color:#1B1E20;
+                        font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                    ">
+
+                    <table role="presentation"
+                        width="100%"
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="background-color:#1B1E20; padding:40px 16px;">
+
+                        <tr>
+                            <td align="center">
+
+                                <table role="presentation"
+                                    width="560"
+                                    cellpadding="0"
+                                    cellspacing="0"
+                                    border="0"
+                                    style="
+                                        width:100%;
+                                        max-width:560px;
+                                        background-color:#24282B;
+                                        border:1px solid #4FD1A5;
+                                        border-radius:8px;
+                                    ">
+
+                                    <!-- Envelope -->
+                                    <tr>
+                                        <td align="center"
+                                            style="padding:42px 20px 24px;">
+
+                                            <table role="presentation"
+                                                cellpadding="0"
+                                                cellspacing="0"
+                                                border="0"
+                                                width="100"
+                                                style="
+                                                    width:100px;
+                                                    border:2px solid #4FD1A5;
+                                                    border-radius:5px;
+                                                    background-color:#1B2924;
+                                                ">
+
+                                                <tr>
+                                                    <td align="center"
+                                                        style="
+                                                            height:65px;
+                                                            color:#4FD1A5;
+                                                            font-size:32px;
+                                                            line-height:65px;
+                                                        ">
+                                                        ✉
+                                                    </td>
+                                                </tr>
+
+                                            </table>
+
+                                        </td>
+                                    </tr>
+
+                                    <!-- You're in -->
+                                    <tr>
+                                        <td align="center"
+                                            style="
+                                                padding:5px 30px 0;
+                                                color:#4FD1A5;
+                                                font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                                                font-size:34px;
+                                                font-weight:600;
+                                            ">
+                                            You're in!
+                                        </td>
+                                    </tr>
+
+                                    <!-- Subtitle -->
+                                    <tr>
+                                        <td align="center"
+                                            style="
+                                                padding:14px 30px 0;
+                                                color:#E8E6E1;
+                                                font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                                                font-size:18px;
+                                                font-weight:400;
+                                            ">
+                                            Thank you for subscribing!
+                                        </td>
+                                    </tr>
+
+                                    <!-- Description -->
+                                    <tr>
+                                        <td align="center"
+                                            style="
+                                                padding:32px 45px 44px;
+                                                color:#8B9094;
+                                                font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                                                font-size:14px;
+                                                line-height:1.6;
+                                            ">
+                                            We'll keep you updated with flight deals,
+                                            price changes and travel updates.
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                            </td>
+                        </tr>
+
+                    </table>
+
+                    </body>
+                    </html>
+                    """
+                },
+            }
+    poller = client.begin_send(message)
     return func.HttpResponse("New Email added successfully", status_code=201)
 
 
