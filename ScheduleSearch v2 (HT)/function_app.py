@@ -451,6 +451,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
             dep2=segment["departure_airport"]["time"]
             arr2=segment["arrival_airport"]["time"]
             duration = flight.get("total_duration", 0)
+            price2 = flight.get("price", 0)
 
 
             new_entity2 = {"PartitionKey":rk,
@@ -460,7 +461,8 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                             "DEPT":dep2,
                             "ARRT":arr2,
                             "AIRLINE_LOGO":airline_logo,
-                            "TIME":duration}
+                            "TIME":duration,
+                            "PRICE":price2}
             table_client2.create_entity(new_entity2)
             
         

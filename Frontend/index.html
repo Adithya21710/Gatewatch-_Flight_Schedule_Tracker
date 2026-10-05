@@ -1644,8 +1644,18 @@
     }
 
     .row-actions {
-      right: 8px;
       top: 8px;
+      right: 8px;
+      left: 8px;
+
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+
+      z-index: 10;
+      min-width: 0;
+      padding: 0 !important;
     }
 
     .cheapest {
@@ -1653,9 +1663,49 @@
     }
 
     .expand-btn {
-      position: absolute;
-      right: 6px;
-      top: 8px;
+      position: static;
+
+      flex: 0 0 36px;
+      width: 36px;
+      height: 36px;
+
+      margin: 0;
+      padding: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 16px;
+    }
+
+    .delete-btn {
+      flex: 0 0 36px;
+      width: 36px;
+      height: 36px;
+
+      margin: 0;
+      padding: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 16px;
+    }
+
+    .ai-price-btn {
+      width: auto;
+      max-width: calc(100% - 78px);
+      min-width: 0;
+
+      padding: 8px 10px;
+      font-size: 9px;
+      line-height: 1.2;
+
+      white-space: normal;
+      text-align: center;
+      overflow: hidden;
     }
 
     .route-summary { position: relative; }
@@ -1673,6 +1723,28 @@
     .timeline.compact-endpoints { height: 181px; }
 
     .airport-name { font-size: 10px; }
+  }
+
+  @media (max-width: 380px) {
+    .row-actions {
+      top: 6px;
+      right: 6px;
+      left: 6px;
+      gap: 5px;
+    }
+
+    .ai-price-btn {
+      max-width: calc(100% - 74px);
+      padding: 7px 8px;
+      font-size: 8px;
+    }
+
+    .expand-btn,
+    .delete-btn {
+      width: 34px;
+      height: 34px;
+      flex-basis: 34px;
+    }
   }
 
   @media (max-width: 620px) {

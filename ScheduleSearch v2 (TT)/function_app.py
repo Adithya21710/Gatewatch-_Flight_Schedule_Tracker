@@ -226,7 +226,32 @@ def emailfreq(dep,arr,date2,flight_number,airline,aircraft,dep_time,arr_time,air
 }
             
         }
-    logging.info(f"Email sent for frequency change on {dep}-{arr}")
+    logging.info(f"Email sent for frequency increase")
+    poller = client.begin_send(message)
+
+def emailreduction(dep,arr,date,flight_number):
+    CONTAINER_NAME = "gatewatchemail"
+    BLOB_NAME = "subscribers.json"
+    blob_service = BlobServiceClient.from_connection_string(os.environ["AzureWebJobsStorage"])
+    blob = blob_service.get_container_client(CONTAINER_NAME).get_blob_client(BLOB_NAME)
+    subscribers =  json.loads(blob.download_blob().readall())
+
+    message = {
+            "senderAddress": "DoNotReply@b69c3249-d05b-47d9-a9a3-9fc4b60755d6.azurecomm.net",
+            "recipients": {
+                "bcc": [{"address": email} for email in subscribers]
+            },
+            "content": {
+        "subject": f"Flights reduced on {dep} - {arr}",
+        "plainText":f"""Flight frequency has been reduced on -
+        Route: {dep} - {arr}
+        Date: {date}
+        The following flight has been removed:
+        Flight Number: {flight_number}
+        Please check Gatewatch India for the updated flight schedule."""
+        }
+    }
+    logging.info(f"Email sent for frequency decrease")
     poller = client.begin_send(message)
 
 def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_logo):
@@ -544,37 +569,51 @@ def dictcheck():
         if freq!=new_freq:
             entity["FREQ"]=new_freq
             table_client.update_entity(entity)
-            #emailfreq(dep,arr,freq,new_freq,date1)
 
-        
-        entities2 = table_client2.query_entities(query_filter=f"PartitionKey eq '{rk1}'")
-        existing_flights = {entity["RowKey"]: entity for entity in entities2}
+            if freq<new_freq:
+                entities2 = table_client2.query_entities(query_filter=f"PartitionKey eq '{rk1}'")
+                existing_flights = {entity["RowKey"]: entity for entity in entities2}
 
-        current_flights = {}
-        for itinerary in all_flights:
-            for flight in itinerary.get("flights", []):
-                flight_number = flight.get("flight_number")
+                current_flights = {}
+                for itinerary in all_flights:
+                    itinerary_price = itinerary.get("price")
+                    for flight in itinerary.get("flights", []):
+                        flight_number = flight.get("flight_number")
 
-                current_flights[flight_number] = {
-                    "AIRLINE": flight.get("airline"),
-                    "AIRCRAFT": flight.get("airplane"),
-                    "DEPT": flight["departure_airport"]["time"],
-                    "ARRT": flight["arrival_airport"]["time"],
-                    "AIRLINE_LOGO": flight.get("airline_logo"),
-                    "TIME":flight.get("total_duration")
-                }
+                        current_flights[flight_number] = {
+                            "AIRLINE": flight.get("airline"),
+                            "AIRCRAFT": flight.get("airplane"),
+                            "DEPT": flight["departure_airport"]["time"],
+                            "ARRT": flight["arrival_airport"]["time"],
+                            "AIRLINE_LOGO": flight.get("airline_logo"),
+                            "TIME":flight.get("total_duration"),
+                            "PRICE":itinerary_price
+                        }
 
-        for flight_number, flight_data in current_flights.items():
-            if flight_number not in existing_flights:
-                new_entity2 = {"PartitionKey":rk1,
-                                "RowKey":flight_number,
-                                "AIRLINE":flight_data["AIRLINE"],
-                                "AIRCRAFT":flight_data["AIRCRAFT"],
-                                "DEPT":flight_data["DEPT"],
-                                "ARRT":flight_data["ARRT"],
-                                "AIRLINE_LOGO":flight_data["AIRLINE_LOGO"],
-                                "TIME":flight_data["TIME"]}
-                emailfreq(dep,arr,date1,flight_number,flight_data["AIRLINE"],flight_data["AIRCRAFT"],flight_data["DEPT"],flight_data["ARRT"],flight_data["AIRLINE_LOGO"])
+                for flight_number, flight_data in current_flights.items():
+                    if flight_number not in existing_flights:
+                        new_entity2 = {"PartitionKey":rk1,
+                                        "RowKey":flight_number,
+                                        "AIRLINE":flight_data["AIRLINE"],
+                                        "AIRCRAFT":flight_data["AIRCRAFT"],
+                                        "DEPT":flight_data["DEPT"],
+                                        "ARRT":flight_data["ARRT"],
+                                        "AIRLINE_LOGO":flight_data["AIRLINE_LOGO"],
+                                        "TIME":flight_data["TIME"],
+                                        "PRICE":flight_data["PRICE"]}
+                        emailfreq(dep,arr,date1,flight_number,flight_data["AIRLINE"],flight_data["AIRCRAFT"],flight_data["DEPT"],flight_data["ARRT"],flight_data["AIRLINE_LOGO"])
+                        table_client2.create_entity(new_entity2)
+
+            elif freq > new_freq:
+                entities2 = table_client2.query_entities(query_filter=f"PartitionKey eq '{rk1}'")
+                old_flight_numbers = {entity2["RowKey"]for entity2 in entities2}
+                new_flight_numbers = {flight.get("flight_number") for itinerary in all_flights for flight in itinerary.get("flights", []) if flight.get("flight_number")}
+                deleted_flights = old_flight_numbers - new_flight_numbers
+                for flight_number in deleted_flights:
+                    emailreduction(dep,arr,date1,flight_number)
+                    table_client2.delete_entity(partition_key=rk1,row_key=flight_number)
+
+
              
 
         cheapest = min(all_flights, key=lambda f: f.get("price", float("inf")), default=None)
