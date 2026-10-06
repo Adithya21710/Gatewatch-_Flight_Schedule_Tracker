@@ -71,7 +71,8 @@ def fetch_flight(req: func.HttpRequest) -> func.HttpResponse:
                                 "DEPT":entity["DEPT"],
                                 "ARRT":entity["ARRT"],
                                 "Airline_Logo":entity["AIRLINE_LOGO"],
-                                "Duration":entity["TIME"]})
+                                "Duration":entity["TIME"],
+                                "Price":entity["PRICE"]})
 
     return func.HttpResponse(json.dumps(routelist2), status_code=200)
 
@@ -89,37 +90,26 @@ def fetch_price_data(req: func.HttpRequest) -> func.HttpResponse:
     price_history = entity["PRICE_HISTORY"]
 
     prompt = f"""
-    You are the price-analysis AI for GATEWATCH INDIA.
-    Analyze the following historical flight-price data on the route {dep}-{arr}.
+    You are the travel advisory AI.
+    Provide a concise, data-backed flight-booking recommendation for the route {dep} to {arr} for travel on {date}.
 
-    Each entry is:[timestamp, price_in_INR]
+    Data Inputs:
+    - 60-Day Price History (INR): {price_history}
+    - Target Travel Date: {date}
 
-    Data:{price_history}
+    Analysis Requirements:
+    1. **Price Trajectory:** Evaluate the 60-day trend to see if current rates are stabilizing, climbing, or dropping relative to recent history.
+    2. **Demand Factors:** Identify relevant global events, holidays, conferences, or seasonal shifts around {date} in or connecting through {dep} and {arr}.
+    3. **Timing Verdict:** Synthesize the numerical price action and external event pressures to assess whether to book now or wait.
 
-    Tasks:
-    1. Convert the timestamps into dates.
-    2. Identify the minimum, maximum and average price.
-    3. Identify significant price increases and decreases.
-    4. Identify periods where the price remained relatively low.
-    5. Compare the current price with the historical prices.
-    6. Based ONLY on the historical pattern, assess whether the
-    current price appears relatively low, typical, or high.
-    7. Give a booking-timing assessment based on the observed
-    historical pattern.
-
-    Important:
-    Do NOT produce a long list of bullet points.
-    - Do NOT give a technical specification sheet.
-    - Use a natural, conversational style.
-    - Organize the answer into a few short sections with clear headings.
-    - Prefer short paragraphs over bullet points.
-    - Keep the entire response concise and easy to scan.
-    - Focus on information that is actually useful to a traveller.
-    - Do not guarantee that prices will fall or rise.
-    - Do not claim to predict the future with certainty.
-    - Do not invent information that isn't present in the data.
-    - Clearly distinguish historical observations from future expectations.
-    - Keep the final assessment concise and useful to a traveller.
+    Formatting & Tone Constraints:
+    - Write in a natural, conversational, yet professional style.
+    - Organize using short sections with clear headings.
+    - Use short paragraphs instead of long lists of bullet points.
+    - Do NOT output raw data dumps, technical specification sheets, or rigid enumerations.
+    - Clearly distinguish between historical price patterns and future event-driven expectations.
+    - Do not guarantee price movements or claim absolute certainty.
+    - Keep the final assessment practical and directly useful for a traveler making a decision.
     """
     response = gemini_client.models.generate_content(
     model="gemini-3.1-flash-lite",
@@ -145,11 +135,11 @@ def fetch_flight_data(req: func.HttpRequest) -> func.HttpResponse:
     departure = entity["DEPT"]
     arrival = entity["ARRT"]
 
-    prompt = f"""
-    You are the flight information assistant for GATEWATCH INDIA.
 
-    Give the traveller a concise, friendly and easy-to-read overview of this
-    specific flight:
+    prompt = f"""
+    You are the flight information assistant.
+    A traveller is about to book or fly on this specific flight and wants
+    to know exactly what to expect — not just specs, but the real experience.
 
     Flight: {rk}
     Airline: {airline}
@@ -158,54 +148,53 @@ def fetch_flight_data(req: func.HttpRequest) -> func.HttpResponse:
     Departure: {departure}
     Arrival: {arrival}
 
-    The goal is to help a traveller understand what their journey will be like.
+    Your job is to give them a warm, honest, traveller-focused briefing.
+    Draw on what is generally known about this airline and aircraft type.
 
-    Cover the most useful information about:
+    Cover all of the following:
 
-    - The aircraft and what it is like to fly on.
-    - The cabin classes that are normally available and the main difference
-    between them.
-    - Meals and drinks passengers can typically expect.
-    - Seats, entertainment, Wi-Fi/connectivity and charging facilities.
-    - The general passenger experience on this route.
+    AIRLINE
+    - What kind of airline is this? (budget, full-service, hybrid)
+    - What is the airline's general reputation among passengers?
+    - Any standout strengths or common complaints travellers mention?
 
-    IMPORTANT:
-    - Do NOT produce a long list of bullet points.
-    - Do NOT give a technical specification sheet.
-    - Use a natural, conversational style.
-    - Organize the answer into a few short sections with clear headings.
-    - Prefer short paragraphs over bullet points.
-    - Keep the entire response concise and easy to scan.
-    - Focus on information that is actually useful to a traveller.
-    - Mention only the most relevant aircraft specifications.
-    - Clearly distinguish between information that is typical and information
-    that is confirmed for this particular flight.
-    - Aircraft configurations, meals, seats, Wi-Fi and entertainment can vary
-    by airline and aircraft, so do not present typical information as
-    guaranteed.
-    - Do not invent information. If something cannot be reliably determined,
-    simply say that it may vary or is not available.
+    AIRCRAFT
+    - What is this aircraft like to fly on in plain terms?
+    - Cabin width, seat comfort, window size, noise levels — anything
+    that affects how the journey feels.
+    - Is this aircraft considered modern or aging for this route?
 
-    Suggested structure:
+    CABIN & SEATING
+    - What cabin classes are available on this aircraft?
+    - What are the seat pitch, width and recline like in each class?
+    - Are there lie-flat beds, extra legroom options or premium economy?
+    - Window, middle or aisle — any seating tips for this aircraft?
 
-    ### Your Flight
-    Briefly introduce the flight, airline, aircraft and route.
+    FOOD & DRINK
+    - Is food included or paid separately on this airline?
+    - What is the quality and variety like for each cabin class?
+    - Any specific meals or drinks this airline is known for?
 
-    ### The Aircraft
-    Give a short, traveller-focused description of the aircraft and what
-    passengers can generally expect onboard.
+    ENTERTAINMENT & CONNECTIVITY
+    - Is there a seatback screen or does the airline use an app/streaming?
+    - Is Wi-Fi available and what is it like (speed, cost, reliability)?
+    - Are there USB/power outlets at every seat?
 
-    ### Cabin & Service
-    Briefly explain the available cabin classes, seating experience,
-    meals/drinks, onboard services and passenger reviews of this specific aircraft and reviews about the airline.
+    WHAT TO PACK / PRACTICAL TIPS
+    - Anything specific a traveller should bring or prepare for?
+    - Any quirks about this airline's check-in, boarding or baggage policy
+    that are worth knowing in advance?
 
-    ### What to Expect
-    Give a short overall impression of the passenger experience on this
-    journey, including anything particularly useful for a traveller.
-
-    End with a one-sentence practical takeaway for the passenger.
-
-    Keep the response around 250–350 words maximum.
+    WRITING RULES:
+    - Write in a warm, honest and conversational tone — like a well-travelled
+    friend giving advice, not a brochure.
+    - Use short paragraphs under clear headings. No long bullet lists.
+    - Be specific where you can. Vague generalities are not helpful.
+    - If something varies or cannot be confirmed, say so briefly and move on.
+    - Do not invent reviews or ratings. Describe what is generally known.
+    - Do not present typical configurations as guaranteed for this flight.
+    - End with one practical sentence the traveller should remember.
+    - Keep the total response between 350–450 words.
     """
     response = gemini_client.models.generate_content(
     model="gemini-3.1-flash-lite",
