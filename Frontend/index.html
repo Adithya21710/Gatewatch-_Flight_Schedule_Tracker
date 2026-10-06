@@ -1020,9 +1020,34 @@
 
   .flight-top {
     display: grid;
-    grid-template-columns: 180px 110px minmax(0, 1fr) 140px;
+    grid-template-columns: 180px 110px minmax(0, 1fr) 92px 140px;
     align-items: center;
     gap: 14px;
+  }
+
+  .flight-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .flight-price-label {
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .flight-price strong {
+    color: var(--teal);
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
   }
 
   .flight-airline {
@@ -1713,6 +1738,17 @@
     .flight-top {
       grid-template-columns: 1fr;
       gap: 7px;
+    }
+
+    .flight-price {
+      align-items: flex-start;
+      flex-direction: row;
+      gap: 7px;
+    }
+
+    .flight-price-label {
+      margin-top: 2px;
+      margin-bottom: 0;
     }
 
     .aircraft-info-btn {
@@ -2745,6 +2781,10 @@
     const aircraft = flight.Aircraft || "Aircraft unavailable";
     const flightNumber = flight.Flight_Number || "—";
 
+    // Support the common field names returned by the backend.
+    // SerpApi exposes the fare as `price` on each flight option.
+    const flightPrice = flight.Price ?? flight.price ?? flight.PRICE ?? flight.Flight_Price ?? null;
+
     return `
       <div class="flight-card">
         <div class="flight-top">
@@ -2760,6 +2800,11 @@
 
           <div>
             ${buildTimeline(flight.DEPT, flight.ARRT, depCode, arrCode, flight.Duration)}
+          </div>
+
+          <div class="flight-price" aria-label="Flight price">
+            <span class="flight-price-label">PRICE</span>
+            <strong>${formatPrice(flightPrice)}</strong>
           </div>
 
           <button
