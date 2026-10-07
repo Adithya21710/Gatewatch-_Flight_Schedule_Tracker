@@ -470,7 +470,3 @@ Gatewatch is designed around five main goals:
 3. Track price movement over time.
 4. Notify users when something important changes.
 5. Keep the system lightweight, serverless, and cost-conscious.
-
-## License
-
-Add the project's license here if one has been selected for the repository.
