@@ -354,9 +354,9 @@ The frontend communicates with the HTTP-triggered Function App through the follo
 | `GET` | `/api/fetch_route` | Fetch tracked route information |
 | `GET` | `/api/fetch_flight` | Fetch flight-level information for a route |
 | `GET` | `/api/fetch_price_data` | AI analysis of the pricing, tells whether it is a good time to book |
+| `GET` | `/api/fetch_flight_data` | Analysis of the airline, aircraft and he route served |
 | `POST` | `/api/add_route` | Add and initialize a tracked route |
 | `POST` | `/api/add_email` | Add an email subscriber |
-| `GET` | `/api/fetch_flight_data` | Analysis of the airline, aircraft and he route served |
 | `DELETE` | `/api/delete_route` | Remove a tracked route |
 
 Protected operations use the configured access mechanism implemented by the HTTP Function App.
