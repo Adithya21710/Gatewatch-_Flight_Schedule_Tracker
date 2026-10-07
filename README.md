@@ -1,115 +1,476 @@
-# Gatewatch — Flight Frequency Tracker
+# Gatewatch — Flight Route Intelligence
 
-**A serverless flight-monitoring system on Azure that tracks how often flights operate on specific routes, alerts on change, and manages itself through a live web dashboard.**
+**Gatewatch is a serverless flight-monitoring platform that watches routes over time, tracks flight frequency and prices, detects changes, and alerts users through email.**
 
-Built end-to-end on Azure: two independently deployed Function Apps, schemaless data storage, transactional email, a live third-party API integration with deliberate quota isolation, and a hand-designed frontend.
+The project is built on Azure and uses SerpApi's Google Flights data as its live flight-data source. Instead of acting as a one-time flight search page, Gatewatch stores route information and compares what changes over time.
 
-## Why this project
+## Why Gatewatch
 
-Most flight trackers are read-only — they show you a schedule. GateWatch is a small piece of *infrastructure*: it watches routes over time, reacts to change, manages its own data lifecycle (expiring and removing stale routes automatically), and exposes that control to a real UI instead of a config file. It was built to solve an actual personal problem (tracking flight frequency ahead of travel dates) and shaped by real production concerns along the way.
+Most flight search tools answer a question at one point in time:
+
+> What flights are available right now?
+
+Gatewatch focuses on the question that comes after that:
+
+> What changed since I started watching this route?
+
+For a tracked route, Gatewatch can surface:
+
+- Flight frequency
+- Individual flight options
+- Airline and flight number
+- Aircraft information
+- Departure and arrival times
+- Price for each flight
+- Lowest available route price
+- Historical price data
+- Frequency changes
+- Added or removed flights
+- Route expiry and automatic cleanup
+- Email notifications for important changes
+
+This turns a flight search into a lightweight route-monitoring system.
 
 ## Architecture
 
+```text
+                         ┌──────────────────────┐
+                         │      SerpApi         │
+                         │    Google Flights    │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+┌─────────────────┐       ┌──────────────────────┐
+│ Static Frontend │ ────▶ │ HTTP Function App   │
+│ HTML/CSS/JS     │       │ Route / Flight APIs  │
+└─────────────────┘       └──────────┬───────────┘
+                                     │
+                                     ▼
+                              ┌───────────────┐
+                              │ Azure Table   │
+                              │ Storage       │
+                              └───────┬───────┘
+                                      ▲
+                                      │
+                              ┌───────┴────────┐
+                              │ Timer Function │
+                              │ Daily Monitor  │
+                              └───────┬────────┘
+                                      │
+                                      ▼
+                         ┌────────────────────────┐
+                         │ Azure Communication    │
+                         │ Services Email         │
+                         └────────────────────────┘
 ```
-Website ──▶ HTTP Function App ──▶ Table Storage ◀── Timer Function App ──▶ SerpAPI
-                                                            │
-                                                            ▼
-                                              Azure Communication Services (email)
+
+### HTTP Function App
+
+The HTTP Function App powers the interactive website.
+
+It is responsible for:
+
+- Fetching tracked routes
+- Adding routes
+- Fetching individual flight details
+- Returning stored price data
+- Returning stored flight data
+- Adding email subscribers
+- Deleting tracked routes
+
+When a route is added, the backend queries SerpApi, processes the returned flight options, and stores the route and individual flight information in Azure Table Storage.
+
+### Timer Function App
+
+The Timer Function App runs automatically and checks tracked routes periodically.
+
+It is responsible for:
+
+- Re-checking live flight frequency
+- Detecting frequency increases or decreases
+- Detecting flights that are no longer present
+- Detecting newly available flights
+- Updating stored route information
+- Sending change notifications
+- Removing expired routes
+- Avoiding unnecessary API calls for expired routes
+
+The HTTP and Timer workloads are kept separate so that interactive requests do not interfere with the background monitoring process.
+
+### Azure Table Storage
+
+Azure Table Storage is used as the application's persistent data layer.
+
+The project uses tables for route-level and flight-level information, including:
+
+- Route
+- Departure and arrival information
+- Flight frequency
+- Lowest price
+- Price history
+- Airline
+- Flight number
+- Aircraft
+- Departure time
+- Arrival time
+- Airline logo
+- Individual flight price
+
+The schemaless model keeps the storage layer lightweight while fitting the route and flight lookup patterns used by the application.
+
+### Static Frontend
+
+The frontend is a self-contained HTML/CSS/JavaScript application.
+
+The interface is designed around an airport departure-board aesthetic and includes:
+
+- Route cards
+- Departure and arrival city imagery
+- Expandable flight details
+- Airline logos
+- Flight prices
+- Aircraft information
+- 24-hour day/night flight timeline
+- Departure and arrival markers
+- Price-history graph
+- Route frequency information
+- Add-route workflow
+- Delete-route workflow
+- Email subscription workflow
+
+## SerpApi integration
+
+SerpApi is a core part of Gatewatch rather than an additional cosmetic API integration.
+
+Gatewatch uses the Google Flights engine to retrieve live flight options. The returned data is processed into route-level and flight-level records.
+
+The application uses:
+
+- `best_flights`
+- `other_flights`
+- Flight numbers
+- Airlines
+- Aircraft
+- Departure and arrival times
+- Flight duration
+- Flight prices
+- Airline logos
+- Price insights
+- Price history
+
+SerpApi's Google Flights results expose flight options through `best_flights` and `other_flights`, while its Price Insights response provides timestamped `price_history` values that can be used to visualize price movement over time. citeturn0search5turn0search0
+
+Gatewatch combines the available flight arrays when building its route-level flight set so that the monitored route represents the returned flight options rather than only the highlighted results.
+
+## Route intelligence
+
+The main value of Gatewatch comes from comparing route snapshots over time.
+
+For example:
+
+```text
+Monday
+BLR → LHR
+18 flights
+Lowest price: ₹37,000
+
+        ↓ daily monitoring
+
+Tuesday
+BLR → LHR
+17 flights
+Lowest price: ₹42,000
+
+        ↓
+
+Gatewatch detects:
+- Frequency decreased
+- Lowest price increased
+- A flight may have been removed
 ```
 
-- **Timer-triggered Function App** — runs on a daily schedule, checks every tracked route's live flight frequency, and emails an alert when frequency changes, when a route's date has passed (auto-removing it), or when the upstream API call itself fails.
-- **HTTP-triggered Function App** — a small REST-style API (list / add / delete) backing the frontend. Adding a route resolves its frequency live, on a *separate* API key from the timer job, so interactive usage can never eat into the background job's monthly quota.
-- **Azure Table Storage** — a schemaless store for tracked routes, chosen deliberately over a relational database for a workload this size: no migrations, minimal cost, and a natural fit for the composite-key duplicate protection the app relies on.
-- **Static frontend** — a self-contained HTML/CSS/JS dashboard, styled after an airport split-flap departure board, with modal-based add/delete flows gated behind a shared access code and a flight-path success animation on completion.
+This makes the application useful for travelers who want to monitor a route rather than repeatedly perform the same search manually.
 
-## Engineering decisions worth calling out
+## Price history
 
-- **Quota isolation by design.** The interactive "add route" path and the background daily check use two separate API keys against the same third-party service, so a burst of manual testing or usage can't silently starve the automated alerting the app exists to provide.
-- **Failure paths are handled, not assumed away.** The daily check distinguishes between "the API call failed" and "the route legitimately has zero flights" — collapsing those two cases was an early bug that would have quietly corrupted stored data and sent false alerts; the fix required reordering validation *before* parsing the response, not after.
-- **Cost-aware by default.** Expired routes are detected and skipped *before* an API call is made, not after, so no quota is spent checking a route that's about to be deleted anyway.
-- **Security trade-offs made consciously, not by accident.** A single shared access code is a deliberate, documented choice appropriate for a single-user personal tool — sent as a request header rather than a URL query parameter specifically to keep it out of server logs, with the trade-off (not real multi-user auth) called out rather than left implicit.
-- **Two independently deployable services.** The interactive API and the background job are split into separate Function Apps on purpose, so the stable, "done" alerting logic can never be affected by active iteration on the website side.
+Gatewatch can store price-history data returned by SerpApi and display it as a compact graph in the route details section.
 
-## Repo structure
+The history is represented as timestamp/price pairs:
 
+```text
+[
+  [timestamp, price],
+  [timestamp, price],
+  [timestamp, price]
+]
 ```
+
+The frontend turns these points into a responsive SVG sparkline showing the movement of the route price over time.
+
+SerpApi documents `price_insights.price_history` as timestamped price points where each entry contains a timestamp followed by the corresponding price. citeturn0search0
+
+## Engineering decisions
+
+### Quota isolation
+
+The interactive route-add operation and the background monitoring operation use separate SerpApi keys.
+
+This prevents interactive testing or heavy website usage from consuming the quota required by the scheduled monitoring system.
+
+### Failure handling
+
+The monitoring system distinguishes between:
+
+- A successful response containing zero flights
+- An unsuccessful upstream API request
+- A route that has genuinely changed
+
+This prevents an upstream API failure from being interpreted as a route with zero flights.
+
+### Expired-route handling
+
+Routes whose travel date has passed are removed or skipped before unnecessary monitoring work is performed.
+
+This avoids spending API quota on routes that are no longer relevant.
+
+### Flight-level tracking
+
+Gatewatch stores individual flight information rather than only storing a route-level frequency.
+
+This makes it possible to compare the actual flight set between monitoring runs and detect flights that have been added or removed.
+
+### Responsive timeline
+
+Each flight has a 24-hour local-time timeline showing:
+
+- Day and night
+- Departure time
+- Arrival time
+- Flight duration
+- Flight path
+- Departure and arrival markers
+- Local timezone information
+
+The timeline is independent of the flight duration, so the complete 24-hour day remains visible for every flight.
+
+### Security trade-off
+
+The application uses a shared access code for protected route-management operations.
+
+This is suitable for the current single-user/personal deployment, but it is not intended to be a full multi-user authentication system.
+
+## Repository structure
+
+```text
 .
-├── http-function/       # HTTP-triggered Function App (list / add / delete routes)
-├── timer-function/       # Timer-triggered Function App (daily frequency check + alerts)
-└── frontend/             # Static site (index.html) — deployable to Azure Static Web Apps
+├── http-function/       # HTTP-triggered Azure Function App
+├── timer-function/      # Timer-triggered Azure Function App
+└── frontend/            # Static HTML/CSS/JS frontend
 ```
 
 ## Tech stack
 
-**Backend:** Python, Azure Functions (HTTP + Timer triggers), Azure Table Storage, Azure Communication Services (email), SerpAPI (Google Flights data)
-**Frontend:** HTML, CSS, vanilla JavaScript
-**Infrastructure:** Azure Static Web Apps, GitHub-driven deployment
+**Backend**
+
+- Python
+- Azure Functions
+- HTTP triggers
+- Timer triggers
+- Azure Table Storage
+- Azure Communication Services Email
+- SerpApi Google Flights API
+
+**Frontend**
+
+- HTML
+- CSS
+- Vanilla JavaScript
+- SVG for the price-history graph
+
+**Infrastructure**
+
+- Microsoft Azure
+- Azure Static Web Apps
+- Azure Functions
+- Azure Table Storage
+- GitHub-based deployment
 
 ## Prerequisites
 
 - An Azure subscription
-- [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
-- Python 3.x (matching a version supported by Azure Functions)
-- A [SerpAPI](https://serpapi.com/) account with **two** API keys (see below)
-- An Azure Communication Services resource with Email enabled, plus a verified sender domain
+- Azure Functions Core Tools
+- Python 3.x compatible with the selected Azure Functions runtime
+- A SerpApi account
+- Separate SerpApi keys for interactive and scheduled workloads
+- Azure Communication Services with Email enabled
+- A verified email sender/domain
+- A GitHub repository for deployment
 
-## Azure resources needed
+## Azure resources
 
 | Resource | Purpose |
 |---|---|
-| Storage account (General-purpose v2, Standard, LRS) | Backs both Function Apps and holds the `MasterTable` table |
-| Function App #1 (Python, Consumption plan) | Hosts the timer trigger |
-| Function App #2 (Python, Consumption plan) | Hosts the HTTP endpoints |
-| Azure Communication Services + Email | Sends alert and confirmation emails |
-| Static Web App | Hosts the frontend, connected to this repo |
+| Storage account | Stores Azure Tables and supports the Function Apps |
+| HTTP Function App | Serves the frontend API |
+| Timer Function App | Performs scheduled route monitoring |
+| Azure Communication Services | Sends route and frequency notifications |
+| Static Web App | Hosts the Gatewatch frontend |
 
 ## Environment variables
 
-Set these in each Function App's **Configuration → Application settings** in the Portal (not just `local.settings.json`, which is local-only).
+Configure these values in each Function App under:
 
-### Timer-triggered Function App
+`Configuration → Application settings`
 
-| Variable | Description |
+Do not rely on `local.settings.json` for production deployment.
+
+### Timer Function App
+
+| Variable | Purpose |
 |---|---|
-| `AzureWebJobsStorage` | Storage account connection string |
-| `SERPAPI_KEY` | SerpAPI key used for the daily frequency check |
+| `AzureWebJobsStorage` | Azure Storage connection |
+| `SERPAPI_KEY` | SerpApi key used by scheduled monitoring |
 | `ACS_EMAIL_KEY` | Azure Communication Services access key |
-| `ACS_ENDPOINT` | Azure Communication Services endpoint URL |
+| `ACS_ENDPOINT` | Azure Communication Services endpoint |
 
-### HTTP-triggered Function App
+### HTTP Function App
 
-| Variable | Description |
+| Variable | Purpose |
 |---|---|
-| `AzureWebJobsStorage` | Same storage account connection string |
-| `ACCESS_CODE` | Shared secret required to add or delete routes |
-| `Serp_API2` | A **separate** SerpAPI key, used only when a route is added |
+| `AzureWebJobsStorage` | Azure Storage connection |
+| `ACCESS_CODE` | Shared secret for protected operations |
+| `Serp_API2` | Separate SerpApi key used by interactive route operations |
 | `ACS_EMAIL_KEY` | Azure Communication Services access key |
-| `ACS_ENDPOINT` | Azure Communication Services endpoint URL |
+| `ACS_ENDPOINT` | Azure Communication Services endpoint |
+
+If additional AI or external-service functionality is enabled in a deployment, its credentials should be stored as Function App application settings rather than committed to the repository.
 
 ## API endpoints
 
-All endpoints live on the HTTP-triggered Function App. `POST` and `DELETE` require the access code sent as an `x-api-key` header.
+The frontend communicates with the HTTP-triggered Function App through the following routes:
 
-| Method | Route | Body / params | Description |
-|---|---|---|---|
-| `GET` | `/api/http_get` | — | Lists all tracked routes |
-| `POST` | `/api/http_post` | `{ "DEP": "DEL", "ARR": "BOM", "DATE": "2026-08-15" }` | Adds a route; resolves frequency live before saving |
-| `DELETE` | `/api/http_del` | `?PartitionKey=Route&RowKey=DEL-BOM-2026-08-15` | Removes a route |
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/fetch_route` | Fetch tracked route information |
+| `GET` | `/api/fetch_flight` | Fetch flight-level information for a route |
+| `POST` | `/api/add_route` | Add and initialize a tracked route |
+| `POST` | `/api/add_email` | Add an email subscriber |
+| `GET` | `/api/fetch_price_data` | Fetch stored price information |
+| `GET` | `/api/fetch_flight_data` | Fetch stored flight information |
+| `DELETE` | `/api/delete_route` | Remove a tracked route |
 
-## Deployment
+Protected operations use the configured access mechanism implemented by the HTTP Function App.
 
-1. **Create the storage account and both Function Apps** in the Portal, linking each Function App to the same storage account.
-2. **Create the `MasterTable` table** in the storage account (Data storage → Tables → + Table).
-3. **Set the environment variables** above on each Function App.
-4. **Deploy each backend folder:**
-   ```
-   cd http-function
-   func azure functionapp publish <your-http-function-app-name>
+## Local development
 
-   cd ../timer-function
-   func azure functionapp publish <your-timer-function-app-name>
-   ```
-5. **Enable CORS** on the HTTP Function App (Portal → CORS) for your Static Web App's domain.
-6. **Create the Static Web App**, connect it to this repo with `frontend/` as the app location, and let it auto-deploy.
-7. Open the deployed site, enter your access code, and add your first route.
+The frontend can be tested locally without changing the production API.
 
+From the frontend directory:
+
+```bash
+python -m http.server 5500
+```
+
+Then open:
+
+```text
+http://localhost:5500
+```
+
+If the browser blocks API requests, verify that the Azure Function App CORS configuration allows the local development origin.
+
+## Backend deployment
+
+Deploy the two Function Apps independently:
+
+```bash
+cd http-function
+func azure functionapp publish <your-http-function-app-name>
+```
+
+Then:
+
+```bash
+cd ../timer-function
+func azure functionapp publish <your-timer-function-app-name>
+```
+
+## Frontend deployment
+
+Create an Azure Static Web App and connect it to the GitHub repository.
+
+Use:
+
+```text
+App location: frontend/
+```
+
+The Static Web App can then deploy the frontend automatically whenever changes are pushed to the configured branch.
+
+## Data flow
+
+### Adding a route
+
+```text
+User enters route
+        |
+        v
+HTTP Function
+        |
+        v
+SerpApi Google Flights
+        |
+        v
+Process flight options
+        |
+        +----> MasterTable
+        |
+        +----> AirlineDetails
+        |
+        v
+Frontend displays route
+```
+
+### Monitoring a route
+
+```text
+Timer trigger
+      |
+      v
+Read tracked routes
+      |
+      v
+Check route date
+      |
+      v
+Query SerpApi
+      |
+      v
+Compare current and stored data
+      |
+      +----> Frequency changed
+      |
+      +----> Flight added/removed
+      |
+      +----> Price changed
+      |
+      v
+Update storage
+      |
+      v
+Send email notification when required
+```
+
+## Project goals
+
+Gatewatch is designed around five main goals:
+
+1. Monitor flight routes instead of performing one-time searches.
+2. Detect meaningful changes in flight availability and frequency.
+3. Track price movement over time.
+4. Notify users when something important changes.
+5. Keep the system lightweight, serverless, and cost-conscious.
+
+## License
+
+Add the project's license here if one has been selected for the repository.
