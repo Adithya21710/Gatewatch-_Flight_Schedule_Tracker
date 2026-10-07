@@ -2,7 +2,7 @@
 
 **Gatewatch is a serverless flight-monitoring platform that watches routes over time, tracks flight frequency and prices, detects changes, and alerts users through email.**
 
-The project is built on Azure and uses SerpApi's Google Flights data as its live flight-data source. Instead of acting as a one-time flight search page, Gatewatch stores route information and compares what changes over time.
+The project is built on Azure and uses SerpAPI's Google Flights data as its live flight-data source. Instead of acting as a one-time flight search page, Gatewatch stores route information and compares what changes over time.
 
 ## Why Gatewatch
 
@@ -35,7 +35,7 @@ This turns a flight search into a lightweight route-monitoring system.
 
 ```text
                          ┌──────────────────────┐
-                         │      SerpApi         │
+                         │      SerpAPI         │
                          │    Google Flights    │
                          └──────────┬───────────┘
                                     │
@@ -78,7 +78,7 @@ It is responsible for:
 - Adding email subscribers
 - Deleting tracked routes
 
-When a route is added, the backend queries SerpApi, processes the returned flight options, and stores the route and individual flight information in Azure Table Storage.
+When a route is added, the backend queries SerpAPI, processes the returned flight options, and stores the route and individual flight information in Azure Table Storage.
 
 ### Timer Function App
 
@@ -138,9 +138,9 @@ The interface is designed around an airport departure-board aesthetic and includ
 - Delete-route workflow
 - Email subscription workflow
 
-## SerpApi integration
+## SerpAPI integration
 
-SerpApi is a core part of Gatewatch rather than an additional cosmetic API integration.
+SerpAPI is a core part of Gatewatch rather than an additional cosmetic API integration.
 
 Gatewatch uses the Google Flights engine to retrieve live flight options. The returned data is processed into route-level and flight-level records.
 
@@ -193,7 +193,7 @@ This makes the application useful for travelers who want to monitor a route rath
 
 ## Price history
 
-Gatewatch can store price-history data returned by SerpApi and display it as a compact graph in the route details section.
+Gatewatch can store price-history data returned by SerpAPI and display it as a compact graph in the route details section.
 
 The history is represented as timestamp/price pairs:
 
@@ -278,7 +278,7 @@ This is suitable for the current single-user/personal deployment, but it is not 
 - Timer triggers
 - Azure Table Storage
 - Azure Communication Services Email
-- SerpApi Google Flights API
+- SerpAPI Google Flights API
 
 **Frontend**
 
@@ -300,7 +300,7 @@ This is suitable for the current single-user/personal deployment, but it is not 
 - An Azure subscription
 - Azure Functions Core Tools
 - Python 3.x compatible with the selected Azure Functions runtime
-- A SerpApi account
+- A SerpAPI account
 - Separate SerpApi keys for interactive and scheduled workloads
 - Azure Communication Services with Email enabled
 - A verified email sender/domain
@@ -329,7 +329,7 @@ Do not rely on `local.settings.json` for production deployment.
 | Variable | Purpose |
 |---|---|
 | `AzureWebJobsStorage` | Azure Storage connection |
-| `SERPAPI_KEY` | SerpApi key used by scheduled monitoring |
+| `SERPAPI_KEY` | SerpAPI key used by scheduled monitoring |
 | `ACS_EMAIL_KEY` | Azure Communication Services access key |
 | `ACS_ENDPOINT` | Azure Communication Services endpoint |
 
@@ -339,7 +339,7 @@ Do not rely on `local.settings.json` for production deployment.
 |---|---|
 | `AzureWebJobsStorage` | Azure Storage connection |
 | `ACCESS_CODE` | Shared secret for protected operations |
-| `Serp_API2` | Separate SerpApi key used by interactive route operations |
+| `Serp_API2` | Separate SerpAPI key used by interactive route operations |
 | `ACS_EMAIL_KEY` | Azure Communication Services access key |
 | `ACS_ENDPOINT` | Azure Communication Services endpoint |
 
@@ -353,10 +353,10 @@ The frontend communicates with the HTTP-triggered Function App through the follo
 |---|---|---|
 | `GET` | `/api/fetch_route` | Fetch tracked route information |
 | `GET` | `/api/fetch_flight` | Fetch flight-level information for a route |
+| `GET` | `/api/fetch_price_data` | AI analysis of the pricing, tells whether it is a good time to book |
 | `POST` | `/api/add_route` | Add and initialize a tracked route |
 | `POST` | `/api/add_email` | Add an email subscriber |
-| `GET` | `/api/fetch_price_data` | Fetch stored price information |
-| `GET` | `/api/fetch_flight_data` | Fetch stored flight information |
+| `GET` | `/api/fetch_flight_data` | Analysis of the airline, aircraft and he route served |
 | `DELETE` | `/api/delete_route` | Remove a tracked route |
 
 Protected operations use the configured access mechanism implemented by the HTTP Function App.
@@ -418,7 +418,7 @@ User enters route
 HTTP Function
         |
         v
-SerpApi Google Flights
+SerpAPI Google Flights
         |
         v
 Process flight options
@@ -443,7 +443,7 @@ Read tracked routes
 Check route date
       |
       v
-Query SerpApi
+Query SerpAPI
       |
       v
 Compare current and stored data
