@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GATEWATCH — Flight Frequency Tracker</title>
+<title>GATEWATCH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -309,7 +309,27 @@
 
   #add-route .field { flex: 1; }
 
-  #add-route .field input { width: 100%; }
+  #add-route .field input,
+  #add-route .field select {
+    width: 100%;
+  }
+
+  #route-option {
+    appearance: auto;
+    background: var(--tile);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 11px 12px;
+    min-height: 40px;
+  }
+
+  #route-option:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
 
   #add-route button#track-btn {
     width: 100%;
@@ -2084,6 +2104,13 @@
           <label for="flight-date">Date</label>
           <input type="date" id="flight-date">
         </div>
+        <div class="field">
+          <label for="route-option">Track changes</label>
+          <select id="route-option" name="OPTIONS">
+            <option value="New Flights">New flights</option>
+            <option value="New Flights + Price Change">New flights + price change</option>
+          </select>
+        </div>
         <div class="access-code-field">
           <label for="access-code">Access code</label>
           <input type="password" id="access-code" placeholder="required to add/delete" autocomplete="off">
@@ -3500,6 +3527,7 @@
     const dep = depInput.value.trim().toUpperCase();
     const arr = arrInput.value.trim().toUpperCase();
     const date = dateInput.value;
+    const options = document.getElementById('route-option').value;
 
     let firstInvalid = null;
 
@@ -3528,7 +3556,8 @@
         body: JSON.stringify({
           DEP: dep,
           ARR: arr,
-          DATE: date
+          DATE: date,
+          OPTIONS: options
         })
       });
 

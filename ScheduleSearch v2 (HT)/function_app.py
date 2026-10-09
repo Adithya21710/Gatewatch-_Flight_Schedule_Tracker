@@ -2,13 +2,17 @@ import os
 import logging
 import json
 import requests
+import tempfile
 from google import genai
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import azure.functions as func
 from azure.data.tables import TableServiceClient
 from azure.storage.blob import BlobServiceClient
 from azure.communication.email import EmailClient
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceNotFoundError
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
@@ -43,7 +47,8 @@ def fetch_route(req: func.HttpRequest) -> func.HttpResponse:
                     "CHEAPEST_AIRLINE_LOGO":entity["CHEAPEST_AIRLINE_LOGO"],
                     "CHEAPEST_FLIGHT_NUMBER":entity["CHEAPEST_FLIGHT_NUMBER"],
                     "DEP_IMG":entity["DEP_IMG"],
-                    "ARR_IMG":entity["ARR_IMG"]})
+                    "ARR_IMG":entity["ARR_IMG"],
+                    "OPTIONS":entity["OPTIONS"]})
 
     return func.HttpResponse(json.dumps(routelist), status_code=200)
 
@@ -360,6 +365,65 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
     poller = client.begin_send(message)
     return func.HttpResponse("New Email added successfully", status_code=201)
 
+@app.route(route="voice_text", methods=['POST'])
+def voice_text(req: func.HttpRequest) -> func.HttpResponse:
+
+    client = genai.Client(api_key=os.environ["Gemini_API"])
+    audio_file = req.get_body()
+
+    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as temp_audio:
+        temp_audio.write(audio_file)
+        audio_path = temp_audio.name
+
+    audio_file = client.files.upload(file=audio_path)
+    interaction = client.interactions.create(model="gemini-3.5-transcribe",
+    input=[
+        {
+            "type": "audio",
+            "uri": audio_file.uri,
+            "mime_type": audio_file.mime_type,
+        }
+    ],
+    )
+    spoken_text = interaction.output_text
+    os.remove(audio_path)
+    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
+    rules=f"""
+            Today's date is {today.isoformat()}
+            Extract the departure city, arrival city and travel date
+            from the following speech:
+
+            {spoken_text}
+            Return ONLY a JSON object with these exact fields:
+            {{
+                "DEP": "<IATA code or empty string>",
+                "ARR": "<IATA code or empty string>",
+                "DATE": "<YYYY-MM-DD or empty string>"
+            }}
+            
+            Rules:
+            - Convert city names to IATA airport codes (Mumbai=BOM, Delhi=DEL, Dubai=DXB, London=LHR, Singapore=SIN, etc.)
+            - "next month" means the 1st of next month
+            - "next week" means 7 days from today
+            - "in 2 weeks" means 14 days from today
+            - If something cannot be determined, use empty string
+            - Return ONLY the JSON, no explanation
+
+            Example:
+            {{
+            "DEP": "BLR",
+            "ARR": "DXB",
+            "DATE": "2026-12-11"
+            }}
+            """
+
+    response = client.models.generate_content(model="gemini-2.0-flash",contents=rules)
+
+    route_data = json.loads(response.text)
+
+    return func.HttpResponse(json.dumps(route_data),mimetype="application/json",status_code=200,)
+
 
 @app.route(route="add_route", methods=['POST'])
 def add_route(req: func.HttpRequest) -> func.HttpResponse:
@@ -377,6 +441,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
         dep=data1["DEP"].upper()
         arr=data1["ARR"].upper()
         date3=data1["DATE"]
+        options=data1["OPTIONS"]
         
         api_key= os.environ["Serp_API2"]
         response = requests.get("https://serpapi.com/search.json?engine=google_flights&departure_id="+dep+"&arrival_id="+arr+"&gl=in&hl=en&currency=INR&type=2&outbound_date="+date3+"&show_hidden=true&adults=1&stops=1&api_key="+api_key)
@@ -386,6 +451,14 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
         all_flights = best_flights + other_flights
 
         rk=dep+arr+date3
+
+        try:
+            table_client.get_entity(partition_key="Route",row_key=rk)
+
+            return func.HttpResponse("This route and date is already being tracked",status_code=409)
+
+        except ResourceNotFoundError:
+            pass
 
         freq=len(all_flights)
 
@@ -426,8 +499,14 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                     "CHEAPEST_AIRLINE_LOGO":cheapest_logo or "",
                     "CHEAPEST_FLIGHT_NUMBER":cheapest_flight_number or "",
                     "DEP_IMG":dep_image or "",
-                    "ARR_IMG":arr_image or ""
+                    "ARR_IMG":arr_image or "",
+                    "OPTIONS":options
                 }
+
+        try:
+            table_client.create_entity(new_entity)
+        except ResourceExistsError:
+            return func.HttpResponse("Could not add route", status_code=409)
 
         for flight in all_flights:
             segment = flight["flights"][0]
@@ -454,11 +533,6 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                             "PRICE":price2}
             table_client2.create_entity(new_entity2)
             
-        
-        try:
-            table_client.upsert_entity(new_entity)
-        except ResourceExistsError:
-            return func.HttpResponse("This route and date is already being tracked", status_code=409)
 
         CONTAINER_NAME = "gatewatchemail"
         BLOB_NAME = "subscribers.json"

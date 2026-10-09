@@ -543,6 +543,7 @@ def dictcheck():
         cheapest_price=int(entity["CHEAPEST_PRICE"])
         cheapest_airline=entity["CHEAPEST_AIRLINE"]
         cheapest_airline_logo=entity["CHEAPEST_AIRLINE_LOGO"]
+        options=entity["OPTIONS"]
 
         if date.fromisoformat(date1) <= date.today():
                 emaildate(dep,arr)
@@ -615,19 +616,20 @@ def dictcheck():
 
 
              
+        if options == 2:
+            cheapest = min(all_flights, key=lambda f: f.get("price", float("inf")), default=None)
+            cheapest_price2 = cheapest.get("price")
+            cheapest_logo2 = cheapest.get("airline_logo")
+            leg = cheapest.get("flights", [{}])[0]
+            cheapest_airline2 = leg.get("airline")
+            cheapest_flight_number2 = leg.get("flight_number")
+            price_insights = data.get("price_insights", {})
+            lowest_price2 = price_insights.get("lowest_price")
+            price_level2 = price_insights.get("price_level")
+            price_history_json2 = json.dumps(price_insights.get("price_history", []))
 
-        cheapest = min(all_flights, key=lambda f: f.get("price", float("inf")), default=None)
-        cheapest_price2 = cheapest.get("price")
-        cheapest_logo2 = cheapest.get("airline_logo")
-        leg = cheapest.get("flights", [{}])[0]
-        cheapest_airline2 = leg.get("airline")
-        cheapest_flight_number2 = leg.get("flight_number")
-        price_insights = data.get("price_insights", {})
-        lowest_price2 = price_insights.get("lowest_price")
-        price_level2 = price_insights.get("price_level")
-        price_history_json2 = json.dumps(price_insights.get("price_history", []))
+            diff = abs(cheapest_price2-cheapest_price)
 
-        if cheapest_airline!=cheapest_airline2 or cheapest_price!=cheapest_price2:
             entity["PRICE_HISTORY"]=price_history_json2
             entity["LOWEST_PRICE"]=lowest_price2
             entity["PRICE_LEVEL"]=price_level2
@@ -636,7 +638,8 @@ def dictcheck():
             entity["CHEAPEST_AIRLINE_LOGO"]=cheapest_logo2
             entity["CHEAPEST_FLIGHT_NUMBER"]=cheapest_flight_number2
             table_client.update_entity(entity)
-            emailprice(dep,arr,cheapest_price,cheapest_price2,cheapest_airline,cheapest_airline2,cheapest_airline_logo,cheapest_logo2)
+            if cheapest_airline!=cheapest_airline2 or ((diff/cheapest_price)*100) > 4.5:
+                emailprice(dep,arr,cheapest_price,cheapest_price2,cheapest_airline,cheapest_airline2,cheapest_airline_logo,cheapest_logo2)
 
 
 
