@@ -4,13 +4,13 @@
 
 The project is built on Azure and uses SerpAPI's Google Flights data as its live flight-data source. Instead of acting as a one-time flight search page, Gatewatch stores route information and compares what changes over time.
 
-## Why Gatewatch
+## Why Gatewatch?
 
 Most flight search tools answer a question at one point in time:
 
 > What flights are available right now?
 
-Gatewatch focuses on the question that comes after that:
+Gatewatch focuses on:
 
 > What changed since I started watching this route?
 
@@ -66,7 +66,7 @@ This turns a flight search into a lightweight route-monitoring system.
 
 ### HTTP Function App
 
-The HTTP Function App powers the interactive website.
+The HTTP Function App provides API endpoints for the website.
 
 It is responsible for:
 
@@ -82,7 +82,7 @@ When a route is added, the backend queries SerpAPI, processes the returned fligh
 
 ### Timer Function App
 
-The Timer Function App runs automatically and checks tracked routes periodically.
+The Timer Function App runs automatically and checks tracked routes periodically at 9 AM (IST) everyday.
 
 It is responsible for:
 
@@ -162,7 +162,7 @@ The application uses:
 - Price insights
 - Price history
 
-SerpApi's Google Flights results expose flight options through `best_flights` and `other_flights`, while its Price Insights response provides timestamped `price_history` values that can be used to visualize price movement over time. citeturn0search5turn0search0
+SerpAPI's Google Flights results expose flight options through `best_flights` and `other_flights`, while its Price Insights response provides timestamped `price_history` values that can be used to visualize price movement over time.
 
 Gatewatch combines the available flight arrays when building its route-level flight set so that the monitored route represents the returned flight options rather than only the highlighted results.
 
@@ -211,13 +211,13 @@ The history is represented as timestamp/price pairs:
 
 The frontend turns these points into a responsive SVG sparkline showing the movement of the route price over time.
 
-SerpApi documents `price_insights.price_history` as timestamped price points where each entry contains a timestamp followed by the corresponding price. citeturn0search0
+SerpApi documents `price_insights.price_history` as timestamped price points where each entry contains a timestamp followed by the corresponding price.
 
 ## Engineering decisions
 
 ### Quota isolation
 
-The interactive route-add operation and the background monitoring operation use separate SerpApi keys.
+The interactive route-add operation and the background monitoring operation use separate SerpAPI keys.
 
 This prevents interactive testing or heavy website usage from consuming the quota required by the scheduled monitoring system.
 
@@ -363,8 +363,9 @@ The frontend communicates with the HTTP-triggered Function App through the follo
 | `GET` | `/api/fetch_flight_data` | Analysis of the airline, aircraft, and route served |
 | `POST` | `/api/add_route` | Add and initialize a tracked route |
 | `POST` | `/api/add_email` | Add an email subscriber |
-| `DELETE` | `/api/delete_route` | Remove a tracked route |
 | `POST` | `/api/voice_text` | Extract departure, arrival, and date from a voice recording |
+| `DELETE` | `/api/delete_route` | Remove a tracked route |
+
 
 The `OPTIONS` field for route tracking modes is a numeric value:
 
@@ -378,24 +379,6 @@ Send these values as JSON numbers, not descriptive strings.
 The `POST /api/voice_text` endpoint accepts raw WebM audio and uses Gemini to extract departure airport, arrival airport, and travel date. It returns JSON with `DEP`, `ARR`, and `DATE` fields. After successful recognition, the frontend uses this response to populate the route form.
 
 Protected operations use the configured access mechanism implemented by the HTTP Function App.
-
-## Local development
-
-The frontend can be tested locally without changing the production API.
-
-From the frontend directory:
-
-```bash
-python -m http.server 5500
-```
-
-Then open:
-
-```text
-http://localhost:5500
-```
-
-If the browser blocks API requests, verify that the Azure Function App CORS configuration allows the local development origin.
 
 ## Backend deployment
 
