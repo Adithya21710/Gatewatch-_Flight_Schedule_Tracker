@@ -551,6 +551,7 @@ def dictcheck():
                 for entity2 in table_client2.list_entities():
                     if entity2["PartitionKey"]==rk1:
                         table_client2.delete_entity(partition_key=rk1,row_key=entity2["RowKey"])
+                    continue
 
         
         response = requests.get("https://serpapi.com/search.json?engine=google_flights&departure_id="+dep+"&arrival_id="+arr+"&gl=in&hl=en&currency=INR&type=2&outbound_date="+date1+"&show_hidden=true&adults=1&stops=1&api_key="+api_key)
@@ -566,6 +567,42 @@ def dictcheck():
         all_flights = best_flights + other_flights
 
         new_freq=len(all_flights)
+
+        current_flights2 = {}
+        for itinerary in all_flights:
+            itinerary_price = itinerary.get("price")
+
+            for flight in itinerary.get("flights", []):
+                flight_number = flight.get("flight_number")
+
+                if not flight_number:
+                    continue
+
+                current_flights2[flight_number] = {
+                    "AIRLINE": flight.get("airline"),
+                    "AIRCRAFT": flight.get("airplane"),
+                    "DEPT": flight["departure_airport"]["time"],
+                    "ARRT": flight["arrival_airport"]["time"],
+                    "AIRLINE_LOGO": flight.get("airline_logo"),
+                    "TIME": flight.get("total_duration"),
+                    "PRICE": itinerary_price
+                }
+
+        entities2 = table_client2.query_entities(query_filter=f"PartitionKey eq '{rk1}'")
+        existing_flights2 = {entity2["RowKey"]: entity2 for entity2 in entities2}
+
+        for flight_number, flight_data in current_flights2.items():
+            if flight_number in existing_flights2:
+                existing_entity = existing_flights2[flight_number]
+
+                new_price = flight_data["PRICE"]
+                old_price = existing_entity.get("PRICE")
+
+                if new_price is not None and old_price != new_price:
+                    existing_entity["PRICE"] = new_price
+                    table_client2.update_entity(entity=existing_entity,mode="replace")
+
+       
 
         if freq!=new_freq:
             entity["FREQ"]=new_freq
@@ -616,7 +653,7 @@ def dictcheck():
 
 
              
-        if options == 2:
+        if options == 2 and all_flights:
             cheapest = min(all_flights, key=lambda f: f.get("price", float("inf")), default=None)
             cheapest_price2 = cheapest.get("price")
             cheapest_logo2 = cheapest.get("airline_logo")
