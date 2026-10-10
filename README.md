@@ -124,8 +124,12 @@ The frontend is a self-contained HTML/CSS/JavaScript application.
 
 The interface is designed around an airport departure-board aesthetic and includes:
 
-- Route cards
-- Departure and arrival city imagery
+- World view with an interactive globe showing tracked routes
+- List view for browsing routes without the globe
+- Route colors that distinguish tracking modes
+- Selectable globe routes with route details, including lowest price and weekly frequency
+- Route cards with departure and arrival city imagery
+- Complementary diagonal image edges for the departure and arrival visuals
 - Expandable flight details
 - Airline logos
 - Flight prices
@@ -134,8 +138,8 @@ The interface is designed around an airport departure-board aesthetic and includ
 - Departure and arrival markers
 - Price-history graph
 - Route frequency information
-- Add-route workflow
-- Delete-route workflow
+- Add-route and delete-route workflows
+- Voice-assisted route entry
 - Email subscription workflow
 
 ## SerpAPI integration
@@ -285,7 +289,9 @@ This is suitable for the current single-user/personal deployment, but it is not 
 - HTML
 - CSS
 - Vanilla JavaScript
-- SVG for the price-history graph
+- SVG for the price-history graph and route visualizations
+- Interactive globe and route selection
+- MediaRecorder API for voice capture
 
 **Infrastructure**
 
@@ -354,10 +360,22 @@ The frontend communicates with the HTTP-triggered Function App through the follo
 | `GET` | `/api/fetch_route` | Fetch tracked route information |
 | `GET` | `/api/fetch_flight` | Fetch flight-level information for a route |
 | `GET` | `/api/fetch_price_data` | AI analysis of the pricing, tells whether it is a good time to book |
-| `GET` | `/api/fetch_flight_data` | Analysis of the airline, aircraft and he route served |
+| `GET` | `/api/fetch_flight_data` | Analysis of the airline, aircraft, and route served |
 | `POST` | `/api/add_route` | Add and initialize a tracked route |
 | `POST` | `/api/add_email` | Add an email subscriber |
 | `DELETE` | `/api/delete_route` | Remove a tracked route |
+| `POST` | `/api/voice_text` | Extract departure, arrival, and date from a voice recording |
+
+The `OPTIONS` field for route tracking modes is a numeric value:
+
+| Value | Tracking mode |
+|---:|---|
+| `1` | New flights only |
+| `2` | New flights and price changes |
+
+Send these values as JSON numbers, not descriptive strings.
+
+The `POST /api/voice_text` endpoint accepts raw WebM audio and uses Gemini to extract departure airport, arrival airport, and travel date. It returns JSON with `DEP`, `ARR`, and `DATE` fields. After successful recognition, the frontend uses this response to populate the route form.
 
 Protected operations use the configured access mechanism implemented by the HTTP Function App.
 
