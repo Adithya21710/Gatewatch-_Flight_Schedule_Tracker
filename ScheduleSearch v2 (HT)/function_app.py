@@ -370,110 +370,67 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="voice_text", methods=['POST'])
 def voice_text(req: func.HttpRequest) -> func.HttpResponse:
 
-    audio_path = None
     client = genai.Client(api_key=os.environ["Gemini_API"])
-    audio_file = req.get_body()
-    with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as temp_audio:
-        temp_audio.write(audio_file)
-        audio_path = temp_audio.name
-        audio_file = client.files.upload(file=audio_path,config=types.UploadFileConfig(mime_type="audio/webm"))
+    try:
+        audio_file = req.get_body()
 
-        max_wait_seconds = 60
-        waited_seconds = 0
-
-        while waited_seconds < max_wait_seconds:
-            if audio_file.state and audio_file.state.name == "ACTIVE":
-                break
-
-            if audio_file.state and audio_file.state.name == "FAILED":
-                raise RuntimeError(f"Gemini audio processing failed: {audio_file.state}")
-
-            time.sleep(2)
-            waited_seconds += 2
-
-            audio_file = client.files.get(name=audio_file.name)
-
-        if not audio_file.state or audio_file.state.name != "ACTIVE":
-            raise TimeoutError("Gemini audio file did not become ACTIVE within 60 seconds")
-
-        logging.info("Gemini audio file is ACTIVE")
-
-        interaction = client.interactions.create(model="gemini-3.5-transcribe",
-        input=[
-            {
-                "type": "audio",
-                "uri": audio_file.uri,
-                "mime_type": audio_file.mime_type,
-            }
-        ],
-        )
-        spoken_text = interaction.output_text
+        if not audio_file:
+            return func.HttpResponse(
+                json.dumps({"error": "No audio received"}),
+                mimetype="application/json",
+                status_code=400
+            )
+        
+    
 
         today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
-        rules=f"""
-                Today's date is {today.isoformat()}
-                Interpret relative dates using this date.
-                - "next month" means the first day of the next calendar month.
-                - "next week" means 7 days from today.
-                - "in 2 weeks" means 14 days from today.
-                - Explicit dates such as "1st January 2027" must be returned as "2027-01-01"
-                Extract the departure city, arrival city and travel date
-                from the following speech:
+        prompt=f"""
+                Extract the departure airport, arrival airport, and travel date from the supplied audio recording.
 
-                {spoken_text}
+                Today's date is {today.isoformat()}
+                
                 Return ONLY a JSON object with these exact fields:
                 {{
                     "DEP": "<IATA code or empty string>",
                     "ARR": "<IATA code or empty string>",
                     "DATE": "<YYYY-MM-DD or empty string>"
                 }}
-                
+                    
                 Rules:
                 - Convert city names to IATA airport codes (Mumbai=BOM, Delhi=DEL, Dubai=DXB, London=LHR, Singapore=SIN, etc.)
                 - "next month" means the 1st of next month
-                - "next week" means 7 days from today
-                - "in 2 weeks" means 14 days from today
+                - "next week" means 7 days from today, "in 2 weeks" means 14 days from today
                 - If something cannot be determined, use empty string
                 - Return ONLY the JSON, no explanation
-
-                Example:
-                {{
-                "DEP": "BLR",
-                "ARR": "DXB",
-                "DATE": "2026-12-11"
-                }}
                 """
-        
-        response = client.models.generate_content(model="gemini-3.1-flash-lite",contents=rules)
-        result_text = (response.text or "").strip()
 
-        # Log Gemini's response to Azure logs
-        logging.info("Gemini extraction response: %s", result_text)
-
-        # Remove Markdown code fences if Gemini returns them
-        if result_text.startswith("```"):
-            lines = result_text.splitlines()
-            if lines and lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            result_text = "\n".join(lines).strip()
-
-        try:
-            route_data = json.loads(result_text)
-        except json.JSONDecodeError:
-            logging.exception("Gemini returned invalid JSON")
-            return func.HttpResponse(
-                json.dumps({"error": "Gemini returned invalid JSON"}),
-                mimetype="application/json",
-                status_code=500
+        response = client.models.generate_content(
+                model="gemini-3.1-flash-lite",
+                contents=[
+                    prompt,
+                    types.Part.from_bytes(
+                        data=audio_file,
+                        mime_type="audio/webm"
+                    )
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0
+                )
             )
 
-        client.files.delete(name=audio_file.name)
-        os.remove(audio_path)
+        route_data = json.loads(response.text or "")
 
-    return func.HttpResponse(json.dumps(route_data),mimetype="application/json",status_code=200,)
+        # Validate the expected response fields.
+        for key in ("DEP", "ARR", "DATE"):
+            if key not in route_data or not isinstance(route_data[key], str):
+                raise ValueError(f"Invalid or missing field: {key}")
+
+        return func.HttpResponse(json.dumps(route_data),mimetype="application/json",status_code=200)
+    except Exception:
+        logging.exception("Voice route extraction failed")
+        return func.HttpResponse(json.dumps({"error": "Voice processing failed"}),mimetype="application/json",status_code=500)
 
 
 @app.route(route="add_route", methods=['POST'])
