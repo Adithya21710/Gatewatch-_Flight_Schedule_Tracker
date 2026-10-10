@@ -84,7 +84,7 @@ def emailfreq(dep,arr,date2,flight_number,airline,aircraft,dep_time,arr_time,air
 
         <!-- AIRCRAFT --> 
         <td width="20%" valign="middle" 
-            style="font-family:'Courier New',monospace; 
+            style=font-family: 'Trebuchet MS', Arial, sans-serif; 
                 font-size:14px; 
                 color:#8B9094;"> 
             {aircraft} 
@@ -100,7 +100,7 @@ def emailfreq(dep,arr,date2,flight_number,airline,aircraft,dep_time,arr_time,air
                 <tr> 
                     <!-- LANDING / ARRIVAL TIME --> 
                     <td align="left" 
-                        style="font-family:'Courier New',monospace; 
+                        style=font-family: 'Trebuchet MS', Arial, sans-serif; 
                             font-size:13px; 
                             color:#4FD1A5;"> 
                         {arr_time} 
@@ -108,7 +108,7 @@ def emailfreq(dep,arr,date2,flight_number,airline,aircraft,dep_time,arr_time,air
 
                     <!-- DEPARTURE TIME --> 
                     <td align="right" 
-                        style="font-family:'Courier New',monospace; 
+                        style=font-family: 'Trebuchet MS', Arial, sans-serif; 
                             font-size:13px; 
                             color:#E8E6E1;"> 
                         {dep_time} 
@@ -176,7 +176,7 @@ def emailfreq(dep,arr,date2,flight_number,airline,aircraft,dep_time,arr_time,air
 
             <!-- HOURS --> 
             <table width="100%" cellpadding="0" cellspacing="0" 
-                style="font-family:'Courier New',monospace; 
+                style=font-family: 'Trebuchet MS', Arial, sans-serif; 
                         font-size:11px; 
                         color:#8B9094; 
                         margin-top:6px;"> 
@@ -194,7 +194,7 @@ def emailfreq(dep,arr,date2,flight_number,airline,aircraft,dep_time,arr_time,air
 
             <!-- TIMEZONE --> 
             <table width="100%" cellpadding="0" cellspacing="0" 
-                style="font-family:'Courier New',monospace; 
+                style=font-family: 'Trebuchet MS', Arial, sans-serif; 
                         font-size:11px; 
                         color:#8B9094; 
                         margin-top:10px;"> 
@@ -279,7 +279,7 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
                     margin:0;
                     padding:25px 10px;
                     background:#ffffff;
-                    font-family:Arial,Helvetica,sans-serif;
+                    font-family: 'Trebuchet MS', Arial, sans-serif;
                 ">
 
                 <table width="100%" cellpadding="0" cellspacing="0"
@@ -300,7 +300,7 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
                     style="padding-right:25px;">
 
                     <div style="
-                        font-family:'Courier New',monospace;
+                        font-family: 'Trebuchet MS', Arial, sans-serif;
                         font-size:11px;
                         color:#8B9094;
                         margin-bottom:7px;
@@ -309,7 +309,7 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
                     </div>
 
                     <div style="
-                        font-family:Arial,Helvetica,sans-serif;
+                        font-family: 'Trebuchet MS', Arial, sans-serif;
                         font-size:22px;
                         font-weight:bold;
                         color:#E8E6E1;
@@ -330,7 +330,7 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
                         <!-- OLD PRICE -->
                         <td align="left"
                             style="
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:11px;
                                 color:#8B9094;
                             ">
@@ -373,7 +373,7 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
                         <!-- NEW PRICE -->
                         <td align="right"
                             style="
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:11px;
                                 color:{'#E1554F' if nameplate == 'increased' else '#4FD1A5'};
                             ">
@@ -450,7 +450,7 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
 
                         <td align="left"
                             style="
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:9px;
                                 color:#8B9094;
                             ">
@@ -459,7 +459,7 @@ def emailprice(dep,arr,old_price,new_price,old_airline,new_airline,old_logo,new_
 
                         <td align="right"
                             style="
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:10px;
                                 color:{'#E1554F' if nameplate == 'increased' else '#4FD1A5'};
                             ">
