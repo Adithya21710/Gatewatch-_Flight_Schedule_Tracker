@@ -145,7 +145,9 @@
     padding: 0 24px;
   }
 
-  /* ---------- Toggle button ---------- */
+  button:disabled { opacity: .65; cursor: wait !important; }
+  #track-btn[aria-busy="true"]::before { content: "◌ "; }
+\n  /* ---------- Toggle button ---------- */
   .toolbar {
     display: flex;
     justify-content: flex-end;
@@ -334,6 +336,126 @@
   #add-route button#track-btn {
     width: 100%;
     margin-top: 4px;
+  }
+
+  /* ---------- Voice route entry ---------- */
+  .route-submit-row {
+    display: flex;
+    align-items: stretch;
+    gap: 9px;
+    margin-top: 4px;
+  }
+  #add-route .route-submit-row #track-btn {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    margin-top: 0;
+  }
+  .voice-btn {
+    flex: 0 0 46px;
+    width: 46px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 1px solid rgba(242,169,59,.55);
+    border-radius: 4px;
+    color: var(--amber);
+    background: rgba(242,169,59,.08);
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  .voice-btn:hover { background: rgba(242,169,59,.16); border-color: var(--amber); }
+  .voice-btn:active { transform: translateY(1px); }
+  .voice-btn svg { width: 21px; height: 21px; position: relative; z-index: 1; }
+  .voice-btn[aria-pressed="true"] { color: #15191c; background: var(--amber); border-color: var(--amber); }
+  .voice-btn[aria-pressed="true"]::before,
+  .voice-btn[aria-pressed="true"]::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(242,169,59,.7);
+    border-radius: 50%;
+    animation: voice-ripple 1.7s ease-out infinite;
+    pointer-events: none;
+  }
+  .voice-btn[aria-pressed="true"]::after { animation-delay: .55s; }
+  .voice-btn:disabled { opacity: .55; cursor: wait; }
+  .voice-panel {
+    display: none;
+    position: relative;
+    overflow: hidden;
+    padding: 14px;
+    border: 1px solid rgba(242,169,59,.32);
+    border-radius: 6px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(242,169,59,.10), transparent 72%), #171b1e;
+    text-align: center;
+  }
+  .voice-panel.visible { display: block; animation: voice-panel-in .24s ease both; }
+  .voice-only-overlay .voice-dialog {
+    width: 100%; max-width: 420px; padding: 18px;
+    border: 1px solid var(--hairline); border-radius: 8px;
+    background: var(--panel); box-shadow: 0 24px 70px rgba(0,0,0,.55);
+  }
+  .voice-only-overlay .voice-panel { width:100%; }
+  .voice-only-overlay .voice-dialog-title {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin:0 0 12px; color:var(--amber); font:600 13px var(--mono); letter-spacing:.12em;
+  }
+  .voice-only-overlay .voice-dialog-title button {
+    border:0; background:transparent; color:var(--text-dim); cursor:pointer; font-size:20px;
+  }
+  .voice-panel.listening { border-color: rgba(242,169,59,.65); }
+  .voice-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    color: var(--amber);
+    font: 600 13px var(--sans);
+    margin-bottom: 5px;
+  }
+  .voice-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 0 rgba(242,169,59,.45); }
+  .voice-panel.listening .voice-status-dot { animation: voice-dot 1.25s ease-out infinite; }
+  .voice-hint { margin: 0 auto 10px; max-width: 340px; color: var(--text-dim); font-size: 11px; line-height: 1.55; }
+  .voice-examples { color: var(--text); font-family: var(--mono); font-size: 10px; line-height: 1.65; }
+  .voice-examples span { display: block; }
+  .voice-wave {
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 8px 0 10px;
+  }
+  .voice-wave i { display: block; width: 3px; height: 6px; border-radius: 3px; background: var(--amber); opacity: .55; }
+  .voice-panel.listening .voice-wave i { animation: voice-wave 850ms ease-in-out infinite; opacity: 1; }
+  .voice-wave i:nth-child(2n) { animation-delay: 100ms; }
+  .voice-wave i:nth-child(3n) { animation-delay: 220ms; }
+  .voice-wave i:nth-child(4n) { animation-delay: 340ms; }
+  .voice-wave i:nth-child(5n) { animation-delay: 170ms; }
+  .voice-actions { display: flex; justify-content: center; gap: 8px; }
+  .voice-stop-btn, .voice-cancel-btn {
+    border-radius: 4px; padding: 7px 12px; cursor: pointer; font: 600 11px var(--sans);
+  }
+  .voice-stop-btn { background: var(--amber); color: #1b1e20; border: 1px solid var(--amber); }
+  .voice-cancel-btn { background: transparent; color: var(--text-dim); border: 1px solid var(--hairline); }
+  .voice-stop-btn:disabled, .voice-cancel-btn:disabled { opacity: .5; cursor: wait; }
+  .voice-message { margin: 9px 0 0; color: var(--text-dim); font-size: 11px; line-height: 1.4; }
+  .voice-message.error { color: #ff8982; }
+  @keyframes voice-ripple { 0% { transform: scale(.72); opacity: .8; } 100% { transform: scale(1.45); opacity: 0; } }
+  @keyframes voice-dot { 0% { box-shadow: 0 0 0 0 rgba(242,169,59,.45); } 100% { box-shadow: 0 0 0 8px rgba(242,169,59,0); } }
+  @keyframes voice-wave { 0%,100% { height: 5px; } 50% { height: 22px; } }
+  @keyframes voice-panel-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .voice-panel.visible { animation: none; }
+    .voice-btn[aria-pressed="true"]::before, .voice-btn[aria-pressed="true"]::after,
+    .voice-panel.listening .voice-status-dot, .voice-panel.listening .voice-wave i { animation: none; }
+  }
+  @media (max-width: 380px) {
+    .voice-panel { padding: 12px 9px; }
+    .voice-examples { font-size: 9px; }
   }
 
   .field {
@@ -731,6 +853,104 @@
   .btn-danger:hover { filter: brightness(1.1); }
   .btn-danger:active { transform: translateY(1px); }
 
+
+  /* ---------- Route search and quick filters ---------- */
+  .route-tools {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 25px;
+  }
+  .route-search-wrap { position: relative; flex: 1; min-width: 0; }
+  .route-search-wrap::before {
+    content: "⌕";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-52%);
+    color: var(--text-dim);
+    font-size: 20px;
+    pointer-events: none;
+  }
+  #route-search {
+    width: 100%;
+    background: var(--tile);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    color: var(--text);
+    font: 12px var(--sans);
+    padding: 11px 12px 11px 35px;
+    min-height: 40px;
+  }
+  #route-search::placeholder { color: #747b80; }
+  #route-filter {
+    min-height: 40px;
+    max-width: 210px;
+    background: var(--tile);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    color: var(--text);
+    font: 11px var(--sans);
+    padding: 0 10px;
+  }
+  .tracking-mode {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 5px;
+    border: 1px solid rgba(242,169,59,.28);
+    background: rgba(242,169,59,.07);
+    border-radius: 3px;
+    color: var(--amber);
+    padding: 3px 6px;
+    font: 9px var(--mono);
+    letter-spacing: .025em;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  .tracking-mode.price-watch {
+    color: var(--teal);
+    border-color: rgba(79,209,165,.3);
+    background: rgba(79,209,165,.06);
+  }
+  .load-error {
+    margin: 16px 0;
+    padding: 18px;
+    border: 1px solid rgba(225,85,79,.35);
+    border-radius: 5px;
+    background: rgba(225,85,79,.05);
+    color: var(--text-dim);
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+  }
+  .load-error strong { display:block; color:var(--text); margin-bottom:5px; }
+  .retry-load {
+    margin-top: 10px;
+    padding: 8px 13px;
+    background: transparent;
+    border: 1px solid var(--amber-dim);
+    border-radius: 4px;
+    color: var(--amber);
+    cursor: pointer;
+    font: 600 11px var(--sans);
+  }
+  .route-card[hidden] { display: none !important; }
+  .no-search-results {
+    display: none;
+    padding: 26px 16px;
+    border: 1px dashed var(--hairline);
+    border-radius: 5px;
+    color: var(--text-dim);
+    text-align: center;
+    font-size: 12px;
+  }
+  @media (max-width: 620px) {
+    .route-tools { flex-direction: column; align-items: stretch; gap: 8px; margin-top: 20px; }
+    #route-filter { max-width: none; width: 100%; }
+  }
+
   /* ---------- Board ---------- */
   .board-heading {
     font-family: var(--mono);
@@ -790,16 +1010,34 @@
   .route-visual::after {
     content: "";
     position: absolute;
-    top: -18%;
-    left: 50%;
-    width: 2px;
-    height: 136%;
+    inset: 0;
     background: rgba(232,230,225,.45);
-    transform: rotate(20deg);
-    transform-origin: center;
+    clip-path: polygon(55% 0, 55.35% 0, 45.35% 100%, 45% 100%);
     pointer-events: none;
     z-index: 4;
   }
+  /* Clip the actual photos to the same diagonal, so the image edges—not just
+     an overlaid line—meet flush from top to bottom. */
+  .route-visual .airport-photo:first-child,
+  .route-visual .airport-photo:nth-child(3) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .route-visual .airport-photo:first-child {
+    clip-path: polygon(0 0, 55% 0, 45% 100%, 0 100%);
+    z-index: 1;
+  }
+  .route-visual .airport-photo:nth-child(3) {
+    clip-path: polygon(55% 0, 100% 0, 100% 100%, 45% 100%);
+    z-index: 2;
+  }
+  .route-visual .airport-photo img { width:100%; height:100%; object-fit:cover; }
+  .route-visual .airport-photo:nth-child(3) .airport-label { z-index:3; }
 
   .airport-photo {
     position: relative;
@@ -893,7 +1131,8 @@
     padding: 0 22px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 6px 8px;
     border-top: 1px solid var(--hairline);
   }
 
@@ -938,6 +1177,27 @@
     font-size: 16px;
     font-weight: 500;
   }
+  .route-fare-summary, .route-frequency-summary {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    min-width: 0;
+  }
+  .route-fare-summary strong { color: var(--teal); }
+  .route-frequency-summary { margin-left: auto; }
+  .route-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: 10px var(--mono);
+    white-space: nowrap;
+    padding: 5px 7px;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    color: var(--text-dim);
+  }
+  .route-trend.down { color: var(--teal); border-color: rgba(79,209,165,.28); }
+  .route-trend.up { color: var(--red); border-color: rgba(225,85,79,.28); }
 
   .route-stat-sub {
     color: var(--text-dim);
@@ -2013,6 +2273,155 @@
     .airport-name { font-size: 8px; }
     .timeline-hours { font-size: 7px; }
   }
+
+  /* ---------- Layout repair: keep route metrics on their own row ---------- */
+  .route-summary {
+    grid-template-rows: 210px auto auto;
+  }
+  .route-meta {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+    min-height: 58px;
+    padding: 10px 22px;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+    flex-wrap: wrap;
+  }
+  .route-meta .meta-line {
+    min-width: 0;
+    flex-wrap: wrap;
+    row-gap: 5px;
+  }
+  .route-stat {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    min-width: 0;
+    min-height: 66px;
+    padding: 12px 22px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px 22px;
+    white-space: normal;
+    border-top: 0;
+  }
+  .route-fare-summary,
+  .route-frequency-summary {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: max-content;
+  }
+  .route-frequency-summary { margin-left: 0; }
+  .route-trend {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .route-stat .meta-label,
+  .route-stat-sub { line-height: 1.4; }
+  .route-stat strong { white-space: nowrap; }
+  .details-heading {
+    min-width: 0;
+  }
+  .price-history { min-width: 0; }
+  @media (max-width: 760px) {
+    .route-summary {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: 180px auto auto;
+    }
+    .route-meta {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      padding: 12px 14px;
+    }
+    .route-stat {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      padding: 12px 14px;
+      gap: 10px 16px;
+      justify-content: flex-start;
+    }
+    .route-fare-summary,
+    .route-frequency-summary {
+      min-width: 0;
+    }
+    .route-trend {
+      flex-basis: auto;
+      font-size: 9px;
+    }
+    .details-heading {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "title price" "history history";
+    }
+  }
+  @media (max-width: 420px) {
+    .route-stat {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .route-fare-summary,
+    .route-frequency-summary {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .route-trend { align-self: flex-start; }
+  }
+
+
+  /* Toolbar microphone is positioned in the space beside the Track button. */
+  .toolbar { justify-content: flex-start; }
+  .toolbar-actions { display:flex; align-items:center; gap:10px; }
+  .toolbar-voice-btn { flex:0 0 46px; width:46px; min-height:44px; }
+  /* ---------- World / list view tabs ---------- */
+  .view-tabs { display:flex; gap:6px; margin:24px 0 0; padding:4px; width:100%; border:1px solid var(--hairline); border-radius:5px; background:#101418; }
+  .view-tab { display:inline-flex; flex:1 1 50%; justify-content:center; align-items:center; gap:8px; border:1px solid transparent; border-radius:3px; padding:11px 14px; color:var(--text-dim); background:transparent; font:600 12px var(--sans); cursor:pointer; }
+  .view-tab[aria-selected="true"] { color:var(--amber); background:rgba(242,169,59,.10); border-color:rgba(242,169,59,.32); }
+  .view-tab:focus-visible { outline:2px solid var(--amber); outline-offset:2px; }
+  .view-pane[hidden] { display:none !important; }
+  .globe-legend { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; color:var(--text-dim); font:10px var(--mono); }
+  .globe-legend span { display:inline-flex; align-items:center; gap:6px; }
+  .globe-legend i { width:8px; height:8px; display:inline-block; border-radius:50%; }
+  .globe-legend .legend-price { background:var(--teal); box-shadow:0 0 7px rgba(79,209,165,.45); }
+  .globe-legend .legend-new { background:var(--amber); box-shadow:0 0 7px rgba(242,169,59,.4); }
+  .globe-section { margin-top:34px; padding:20px; border:1px solid var(--hairline); border-radius:7px; background:linear-gradient(145deg,rgba(242,169,59,.045),transparent 45%),#15191c; }
+  .globe-heading-row { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:14px; }
+  .globe-eyebrow { color:var(--teal); font:10px var(--mono); letter-spacing:.16em; margin-bottom:6px; }
+  .globe-heading-row h2 { margin:0; color:var(--text); font:600 18px var(--sans); }
+  .globe-heading-row p { margin:6px 0 0; color:var(--text-dim); font-size:11px; }
+  .globe-counter { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0; }
+  .globe-counter strong { color:var(--amber); font:600 24px var(--mono); }
+  .globe-counter span { color:var(--text-dim); font:9px var(--mono); letter-spacing:.12em; }
+  .globe-layout { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(200px,.8fr); gap:16px; align-items:stretch; }
+  .globe-stage { position:relative; min-height:310px; overflow:hidden; border:1px solid rgba(79,209,165,.15); border-radius:5px; background:radial-gradient(ellipse at 50% 48%,rgba(32,70,68,.26),#0c1115 72%); }
+  #globe-route-details { position:absolute; right:12px; bottom:12px; z-index:5; width:min(270px,calc(100% - 24px)); padding:12px 14px; border:1px solid rgba(79,209,165,.4); border-radius:5px; background:rgba(13,18,21,.94); box-shadow:0 8px 24px rgba(0,0,0,.35); backdrop-filter:blur(8px); }
+  #globe-route-details[hidden] { display:none !important; }
+  .globe-detail-route { color:var(--text); font:600 14px var(--mono); margin-bottom:9px; }
+  .globe-detail-route .globe-detail-arrow { color:var(--amber); padding:0 4px; }
+  .globe-detail-metrics { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .globe-detail-label { display:block; color:var(--text-dim); font:9px var(--mono); letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px; }
+  .globe-detail-value { color:var(--teal); font:600 16px var(--mono); }
+  .globe-detail-frequency { color:var(--text); }
+  #route-globe { display:block; width:100%; height:100%; min-height:310px; cursor:grab; touch-action:pan-y; }
+  #route-globe:active { cursor:grabbing; }
+  .globe-hint { position:absolute; left:12px; bottom:10px; color:#77858a; font:8px var(--mono); letter-spacing:.08em; pointer-events:none; }
+  .globe-route-panel { min-width:0; border:1px solid var(--hairline); border-radius:5px; background:#101418; padding:13px; }
+  .globe-route-panel-title { color:var(--text-dim); font:10px var(--mono); letter-spacing:.12em; padding-bottom:10px; border-bottom:1px solid var(--hairline); }
+  #globe-route-list { max-height:275px; overflow:auto; }
+  .globe-route-item { display:flex; width:100%; text-align:left; align-items:center; justify-content:space-between; gap:8px; padding:11px 8px; border:0; border-bottom:1px solid rgba(255,255,255,.06); background:transparent; color:inherit; font-family:var(--mono); cursor:pointer; border-radius:3px; }
+  .globe-route-item:hover, .globe-route-item.selected { background:rgba(79,209,165,.09); }
+  .globe-route-item.selected { box-shadow:inset 2px 0 var(--amber); }
+  .globe-route-item:last-child { border-bottom:0; }
+  .globe-route-codes { color:var(--text); font-size:12px; white-space:nowrap; }
+  .globe-route-date { color:var(--text-dim); font-size:9px; margin-top:4px; }
+  .globe-route-dot { width:7px; height:7px; border-radius:50%; background:var(--teal); box-shadow:0 0 9px rgba(79,209,165,.5); flex-shrink:0; }
+  .globe-empty { color:var(--text-dim); font-size:11px; padding:14px 0; line-height:1.5; }
+  @media(max-width:700px) { .globe-section{padding:14px;margin-top:26px}.globe-layout{grid-template-columns:1fr}.globe-stage,#route-globe{min-height:270px}.globe-route-panel #globe-route-list{max-height:180px}.globe-heading-row h2{font-size:16px} }
+
 </style>
 </head>
 <body>
@@ -2029,7 +2438,12 @@
 <main>
 
   <div class="toolbar">
-    <button type="button" id="toggle-add">+ Track new route</button>
+    <div class="toolbar-actions">
+      <button type="button" id="toggle-add">+ Track new route</button>
+      <button type="button" class="voice-btn toolbar-voice-btn" id="toolbar-voice-btn" aria-label="Speak a route to track" title="Speak a route to track">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path></svg>
+      </button>
+    </div>
   </div>
 
   <div class="modal-overlay" id="ai-analysis-overlay">
@@ -2107,15 +2521,34 @@
         <div class="field">
           <label for="route-option">Track changes</label>
           <select id="route-option" name="OPTIONS">
-            <option value="New Flights">New flights</option>
-            <option value="New Flights + Price Change">New flights + price change</option>
+            <option value="1">New flights</option>
+            <option value="2">New flights + price change</option>
           </select>
         </div>
         <div class="access-code-field">
           <label for="access-code">Access code</label>
           <input type="password" id="access-code" placeholder="required to add/delete" autocomplete="off">
         </div>
-        <button type="submit" id="track-btn">Track route</button>
+        <div class="voice-panel" id="voice-panel" aria-live="polite" aria-atomic="true">
+          <div class="voice-status"><span class="voice-status-dot" aria-hidden="true"></span><span id="voice-status-text">We're listening...</span></div>
+          <p class="voice-hint" id="voice-hint">Say your departure, destination and travel date in one sentence. For example:</p>
+          <div class="voice-examples">
+            <span>“Track Bengaluru to Dubai on 1st January 2027.”</span>
+            <span>“Add a route from Delhi to Mumbai next week.”</span>
+          </div>
+          <div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="voice-actions">
+            <button type="button" class="voice-stop-btn" id="voice-stop-btn">Finish recording</button>
+            <button type="button" class="voice-cancel-btn" id="voice-cancel-btn">Cancel</button>
+          </div>
+          <p class="voice-message" id="voice-message">Speak clearly, then select “Finish recording”.</p>
+        </div>
+        <div class="route-submit-row">
+          <button type="submit" id="track-btn">Track route</button>
+          <button type="button" class="voice-btn" id="voice-btn" aria-label="Enter route by voice" aria-pressed="false" title="Enter route by voice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path></svg>
+          </button>
+        </div>
       </form>
     </div>
   </div>
@@ -2156,22 +2589,61 @@
     </div>
   </div>
 
+  <div class="route-tools">
+    <div class="route-search-wrap">
+      <input id="route-search" type="search" placeholder="Search airport, route or date…" aria-label="Search tracked routes">
+    </div>
+    <select id="route-filter" aria-label="Filter routes by tracking mode">
+      <option value="all">All tracking modes</option>
+      <option value="new">New flights</option>
+      <option value="price">New flights + price changes</option>
+    </select>
+  </div>
+
   <div class="board-heading">
     <span>TRACKED ROUTES</span>
     <span id="route-count">3</span>
   </div>
 
+  <div class="view-tabs" role="tablist" aria-label="Tracked routes view">
+    <button type="button" class="view-tab" id="world-view-tab" role="tab" aria-selected="true" aria-controls="world-view-pane">◎ World view</button>
+    <button type="button" class="view-tab" id="list-view-tab" role="tab" aria-selected="false" aria-controls="list-view-pane">☷ List view</button>
+  </div>
+
+  <section class="view-pane" id="world-view-pane" role="tabpanel" aria-labelledby="world-view-tab">
+    <section class="globe-section" aria-labelledby="globe-title">
+      <div class="globe-heading-row">
+        <div><div class="globe-eyebrow">GLOBAL NETWORK</div><h2 id="globe-title">Tracked routes worldwide</h2><p>Drag to rotate the globe. Lines show routes currently being monitored.</p></div>
+        <div class="globe-counter"><strong id="globe-route-count">0</strong><span>ROUTES</span></div>
+      </div>
+      <div class="globe-layout">
+        <div class="globe-stage"><canvas id="route-globe" aria-label="Interactive globe showing tracked flight routes" role="img"></canvas><div class="globe-hint">↔ DRAG TO ROTATE · SCROLL TO ZOOM</div><div id="globe-route-details" hidden aria-live="polite"><div class="globe-detail-route"><span id="globe-detail-dep"></span><span class="globe-detail-arrow">→</span><span id="globe-detail-arr"></span></div><div class="globe-detail-metrics"><div><span class="globe-detail-label">Lowest price</span><strong class="globe-detail-value" id="globe-detail-price">—</strong></div><div><span class="globe-detail-label">Frequency</span><strong class="globe-detail-value globe-detail-frequency" id="globe-detail-frequency">—</strong></div></div><div class="globe-route-date" id="globe-detail-date"></div></div></div>
+        <div class="globe-route-panel"><div class="globe-route-panel-title">LIVE ROUTE INDEX</div><div id="globe-route-list"><div class="globe-empty">Loading tracked routes…</div></div></div>
+      </div>
+      <div class="globe-legend" aria-label="Route color legend"><span><i class="legend-price"></i>New flights + price changes</span><span><i class="legend-new"></i>New flights only</span></div>
+    </section>
+  </section>
+
+  <section class="view-pane" id="list-view-pane" role="tabpanel" aria-labelledby="list-view-tab" hidden>
   <div class="board" id="board">
     <!-- Route cards are populated from /api/fetch_route -->
+  </div>
+  <div class="no-search-results" id="no-search-results">No routes match your search or filter.</div>
+  <div class="load-error" id="load-error" hidden>
+    <strong>Couldn't load tracked routes</strong>
+    Check your connection and try again.
+    <button type="button" class="retry-load" id="retry-load">Retry</button>
   </div>
 
   <div class="empty-state" id="empty-state">
     <strong>No routes tracked</strong>
     Add a departure, arrival and date above to start watching a route.
   </div>
+  </section>
 
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
   // ---------------------------------------------------------------------
   // API wiring:
@@ -2282,6 +2754,12 @@
   // Example: https://<your-function-app>.azurewebsites.net/api
   // All fetch calls below use this API_BASE value.
   const API_BASE = "https://schedulesearch-v2-eqbfawfmdkdjbucq.centralindia-01.azurewebsites.net/api";
+  let allRoutes = [];
+  const routeSearchInput = document.getElementById("route-search");
+  const routeFilterSelect = document.getElementById("route-filter");
+  const noSearchResults = document.getElementById("no-search-results");
+  const loadError = document.getElementById("load-error");
+
 
   // Common IATA names used as an overlay. If a code is not in this list,
   // the airport code itself is used as the fallback label.
@@ -3155,6 +3633,36 @@
       </div>`;
   }
 
+  // Normalize legacy/numeric tracking modes returned by Azure Table Storage.
+  // In the stored route data, OPTIONS="2" represents monitoring both new flights and price changes.
+  function trackingModeLabel(value) {
+    const raw = String(value ?? "").trim();
+    const normalized = raw.toLowerCase().replace(/[_-]+/g, " ");
+    if (normalized === "2" || normalized === "new flights + price change" ||
+        normalized === "new flights and price change" || normalized === "new flights + price changes" ||
+        normalized === "both") {
+      return "New Flights + Price Change";
+    }
+    if (normalized === "1" || normalized === "new flights" || normalized === "new flight") {
+      return "New Flights";
+    }
+    // Preserve any other meaningful value instead of silently mislabelling it.
+    return raw || "New Flights";
+  }
+
+  function routePriceTrend(route) {
+    const history = parsePriceHistory(route.PRICE_HISTORY ?? route.price_history ?? route.Price_History ?? route.PriceHistory);
+    if (history.length < 2) return '<span class="route-trend">PRICE TREND · —</span>';
+    const first = history[0].price;
+    const latest = history[history.length - 1].price;
+    if (!(first > 0) || !(latest > 0)) return '<span class="route-trend">PRICE TREND · —</span>';
+    const delta = latest - first;
+    const pct = Math.round(Math.abs(delta / first) * 100);
+    if (delta < 0) return `<span class="route-trend down" title="Price decreased from ${formatPrice(first)} to ${formatPrice(latest)}">↓ ${pct}% since first fare</span>`;
+    if (delta > 0) return `<span class="route-trend up" title="Price increased from ${formatPrice(first)} to ${formatPrice(latest)}">↑ ${pct}% since first fare</span>`;
+    return '<span class="route-trend">→ No change</span>';
+  }
+
   function routeCard(route, index) {
     const dep = String(route.DEP || "").toUpperCase();
     const arr = String(route.ARR || "").toUpperCase();
@@ -3201,13 +3709,21 @@
           <div class="meta-line">
             <span class="meta-label">Date</span>
             <strong>${escapeHtml(route.DATE)}</strong>
+            <span class="tracking-mode ${trackingModeLabel(route.OPTIONS).toLowerCase().includes("price") ? "price-watch" : ""}">${escapeHtml(trackingModeLabel(route.OPTIONS))}</span>
           </div>
         </div>
 
         <div class="route-stat">
-          <span class="meta-label">Frequency</span>
-          <strong>${escapeHtml(route.FREQ)}</strong>
-          <span class="route-stat-sub">flights</span>
+          <span class="route-fare-summary">
+            <span class="meta-label">Lowest fare</span>
+            <strong>${formatPrice(route.LOWEST_PRICE ?? route.CHEAPEST_PRICE)}</strong>
+          </span>
+          <span class="route-frequency-summary">
+            <span class="meta-label">Frequency</span>
+            <strong>${escapeHtml(route.FREQ)}</strong>
+            <span class="route-stat-sub">flights / week</span>
+          </span>
+          ${routePriceTrend(route)}
         </div>
 
         <div class="row-actions">
@@ -3238,28 +3754,71 @@
   }
 
   async function loadRoutes() {
-    // BACKEND API: This endpoint supplies the MasterTable route rows.
-    // Expected backend: GET /fetch_route
+    // BACKEND API: GET /fetch_route supplies saved MasterTable route rows.
+    loadError.hidden = true;
+    board.innerHTML = `<div class="loading-flights">LOADING TRACKED ROUTES…</div>`;
+    board.style.display = "block";
+    emptyState.style.display = "none";
     try {
-      // BACKEND API CALL — MasterTable
-      // Replace /fetch_route here if your backend uses a different route.
       const response = await fetch(`${API_BASE}/fetch_route`);
-
       if (!response.ok) throw new Error(await response.text());
 
-      const routes = await response.json();
+      const payload = await response.json();
+      allRoutes = Array.isArray(payload) ? payload : [];
       board.innerHTML = "";
 
-      routes.forEach((route, index) => {
+      allRoutes.forEach((route, index) => {
         board.appendChild(routeCard(route, index));
       });
 
       updateCount();
+      applyRouteFilters();
     } catch (error) {
       console.error("Unable to load routes: ", error);
+      allRoutes = [];
       board.innerHTML = "";
-      updateCount();
+      board.style.display = "none";
+      noSearchResults.style.display = "none";
+      emptyState.style.display = "none";
+      loadError.hidden = false;
+      routeCount.textContent = "—";
     }
+  }
+
+  function parseFrequency(value) {
+    if (value === null || value === undefined || value === "") return 0;
+    const match = String(value).match(/\d+(?:\.\d+)?/);
+    return match ? Number(match[0]) : 0;
+  }
+
+  function applyRouteFilters() {
+    const query = (routeSearchInput?.value || "").trim().toLowerCase();
+    const mode = routeFilterSelect?.value || "all";
+    const cards = [...board.querySelectorAll(".route-card")];
+    let visible = 0;
+
+    cards.forEach(card => {
+      const haystack = [
+        card.dataset.dep, card.dataset.arr, card.dataset.date,
+        airportName(card.dataset.dep), airportName(card.dataset.arr)
+      ].join(" ").toLowerCase();
+      const route = allRoutes.find(item =>
+        String(item.PartitionKey || "") === card.dataset.pk &&
+        String(item.RowKey || "") === card.dataset.rk
+      );
+      const options = trackingModeLabel(route?.OPTIONS).toLowerCase();
+      const matchesQuery = !query || haystack.includes(query);
+      const matchesMode = mode === "all" ||
+        (mode === "price" && options.includes("price")) ||
+        (mode === "new" && !options.includes("price"));
+      const show = matchesQuery && matchesMode;
+      card.hidden = !show;
+      if (show) visible++;
+    });
+
+    noSearchResults.style.display = cards.length && visible === 0 ? "block" : "none";
+    board.style.display = cards.length ? "block" : "none";
+    if (cards.length && visible === 0) board.style.display = "none";
   }
 
   // ---------- Generic modal open/close ----------
@@ -3381,12 +3940,178 @@
     closeModal(addOverlay);
   });
 
+
+  // ---------- Voice-assisted route entry ----------
+  const voiceButton = document.getElementById('voice-btn');
+  const toolbarVoiceButton = document.getElementById('toolbar-voice-btn');
+  const voicePanel = document.getElementById('voice-panel');
+  // The home-page microphone opens a voice-only dialog; route fields stay hidden
+  // until recognition succeeds, when the normal add-route modal is shown.
+  const voiceOnlyOverlay = document.createElement('div');
+  voiceOnlyOverlay.className = 'modal-overlay voice-only-overlay';
+  voiceOnlyOverlay.id = 'voice-only-overlay';
+  voiceOnlyOverlay.innerHTML = '<div class="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voice-dialog-title"><div class="voice-dialog-title"><span id="voice-dialog-title">VOICE ROUTE ENTRY</span><button type="button" id="voice-dialog-close" aria-label="Close voice entry">×</button></div></div>';
+  document.body.appendChild(voiceOnlyOverlay);
+  voiceOnlyOverlay.querySelector('.voice-dialog').appendChild(voicePanel);
+  document.getElementById('voice-dialog-close').addEventListener('click', () => {
+    voiceCancelled = true;
+    if (voiceRecorder && voiceRecorder.state === 'recording') voiceRecorder.stop();
+    closeModal(voiceOnlyOverlay);
+    resetVoicePanel();
+  });
+  const voiceStatusText = document.getElementById('voice-status-text');
+  const voiceHint = document.getElementById('voice-hint');
+  const voiceMessage = document.getElementById('voice-message');
+  const voiceStopButton = document.getElementById('voice-stop-btn');
+  const voiceCancelButton = document.getElementById('voice-cancel-btn');
+  let voiceRecorder = null;
+  let voiceStream = null;
+  let voiceChunks = [];
+  let voiceRequestInProgress = false;
+  let voiceCancelled = false;
+
+  function setVoiceMessage(message, isError = false) {
+    voiceMessage.textContent = message;
+    voiceMessage.classList.toggle('error', isError);
+  }
+  function stopVoiceTracks() {
+    if (voiceStream) voiceStream.getTracks().forEach(track => track.stop());
+    voiceStream = null;
+  }
+  function resetVoicePanel() {
+    voicePanel.classList.remove('visible', 'listening');
+    voiceButton.setAttribute('aria-pressed', 'false');
+    voiceButton.disabled = false;
+    toolbarVoiceButton.disabled = false;
+    voiceStopButton.disabled = false;
+    voiceCancelButton.disabled = false;
+    voiceStatusText.textContent = "We're listening...";
+    voiceHint.textContent = 'Say your departure, destination and travel date in one sentence. For example:';
+    setVoiceMessage('Speak clearly, then select “Finish recording”.');
+  }
+
+  async function startVoiceRecording() {
+    if (voiceRequestInProgress || (voiceRecorder && voiceRecorder.state === 'recording')) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+      voicePanel.classList.add('visible');
+      voiceStatusText.textContent = 'Microphone unavailable';
+      setVoiceMessage('Use a recent Chrome or Edge browser on localhost or HTTPS, and allow microphone access.', true);
+      return;
+    }
+    voiceCancelled = false;
+    voiceChunks = [];
+    voicePanel.classList.add('visible', 'listening');
+    voiceButton.setAttribute('aria-pressed', 'true');
+    voiceStatusText.textContent = "We're listening...";
+    setVoiceMessage('Speak now, then select “Finish recording”.');
+    try {
+      voiceStream = await navigator.mediaDevices.getUserMedia({audio: true});
+      const preferredType = 'audio/webm;codecs=opus';
+      const options = MediaRecorder.isTypeSupported(preferredType) ? {mimeType: preferredType} : {};
+      voiceRecorder = new MediaRecorder(voiceStream, options);
+      voiceRecorder.addEventListener('dataavailable', e => { if (e.data && e.data.size) voiceChunks.push(e.data); });
+      voiceRecorder.addEventListener('stop', async () => {
+        stopVoiceTracks();
+        voicePanel.classList.remove('listening');
+        voiceButton.setAttribute('aria-pressed', 'false');
+        if (voiceCancelled) { voiceRecorder = null; resetVoicePanel(); return; }
+        voiceButton.disabled = true;
+        toolbarVoiceButton.disabled = true;
+        voiceStopButton.disabled = true;
+        voiceCancelButton.disabled = true;
+        voiceStatusText.textContent = 'Processing your speech…';
+        setVoiceMessage('Sending audio for route recognition…');
+        const mimeType = voiceRecorder && voiceRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(voiceChunks, {type: mimeType});
+        if (!audioBlob.size) {
+          voiceStatusText.textContent = 'No audio captured';
+          setVoiceMessage('No audio was captured. Please try again.', true);
+          voiceRecorder = null; resetVoicePanel(); return;
+        }
+        voiceRequestInProgress = true;
+        try {
+          const response = await fetch(`${API_BASE}/voice_text`, {method:'POST', headers:{'Content-Type':mimeType}, body:audioBlob});
+          const responseText = await response.text();
+          if (!response.ok) throw new Error(`Voice recognition failed (${response.status}). ${responseText}`);
+          const data = JSON.parse(responseText);
+          const dep = String(data.DEP || '').trim().toUpperCase();
+          const arr = String(data.ARR || '').trim().toUpperCase();
+          const date = String(data.DATE || '').trim();
+          if (!dep || !arr || !date) throw new Error('Could not identify departure, arrival, and date. Please try again.');
+          document.getElementById('dep').value = dep;
+          document.getElementById('arr').value = arr;
+          document.getElementById('flight-date').value = date;
+          voiceStatusText.textContent = 'Route details recognized';
+          voiceHint.textContent = 'Review the route, enter your access code, then select “Track route”.';
+          setVoiceMessage(`${dep} → ${arr} · ${date}`);
+          closeModal(voiceOnlyOverlay);
+          voicePanel.classList.remove('visible');
+          openModal(addOverlay, document.getElementById('access-code'));
+          document.getElementById('dep').focus();
+        } catch (err) {
+          voiceStatusText.textContent = 'Could not recognize route';
+          setVoiceMessage(err.message || 'Unable to process audio. Please try again.', true);
+          voiceButton.disabled = false;
+          toolbarVoiceButton.disabled = false;
+          voiceStopButton.disabled = false;
+          voiceCancelButton.disabled = false;
+        } finally {
+          voiceRequestInProgress = false;
+          voiceRecorder = null;
+          // Always restore both entry points after a completed attempt. Previously the
+          // success path left both buttons disabled, so the microphone worked only once.
+          voiceButton.disabled = false;
+          toolbarVoiceButton.disabled = false;
+          voiceButton.setAttribute('aria-pressed', 'false');
+          toolbarVoiceButton.setAttribute('aria-pressed', 'false');
+          voiceStopButton.disabled = false;
+          voiceCancelButton.disabled = false;
+        }
+      }, {once:true});
+      voiceRecorder.start();
+    } catch (err) {
+      stopVoiceTracks();
+      voicePanel.classList.remove('listening');
+      voiceButton.setAttribute('aria-pressed', 'false');
+      voiceStatusText.textContent = 'Microphone unavailable';
+      setVoiceMessage(err.name === 'NotAllowedError' ? 'Microphone permission was denied. Allow microphone access in your browser settings.' : (err.message || 'Could not start microphone.'), true);
+      voiceButton.disabled = false;
+      toolbarVoiceButton.disabled = false;
+      voiceStopButton.disabled = false;
+      voiceCancelButton.disabled = false;
+    }
+  }
+
+  // Home-page mic opens only the voice dialog. The add-route form appears
+  // after successful recognition so the user can review the populated fields.
+  toolbarVoiceButton.addEventListener('click', () => {
+    openModal(voiceOnlyOverlay);
+    startVoiceRecording();
+  });
+  voiceButton.addEventListener('click', () => {
+    openModal(voiceOnlyOverlay);
+    startVoiceRecording();
+  });
+  voiceStopButton.addEventListener('click', () => {
+    if (voiceRecorder && voiceRecorder.state === 'recording') voiceRecorder.stop();
+  });
+  voiceCancelButton.addEventListener('click', () => {
+    voiceCancelled = true;
+    if (voiceRecorder && voiceRecorder.state === 'recording') voiceRecorder.stop();
+    else if (!voiceRequestInProgress) { stopVoiceTracks(); resetVoicePanel(); closeModal(voiceOnlyOverlay); }
+  });
+
   function updateCount() {
     const rows = board.querySelectorAll('.route-card');
     routeCount.textContent = rows.length;
     emptyState.style.display = rows.length === 0 ? 'block' : 'none';
     board.style.display = rows.length === 0 ? 'none' : 'block';
+    noSearchResults.style.display = 'none';
   }
+
+  routeSearchInput.addEventListener("input", applyRouteFilters);
+  routeFilterSelect.addEventListener("change", applyRouteFilters);
+  document.getElementById("retry-load").addEventListener("click", loadRoutes);
 
   // ---------- Route expansion + delete ----------
   const deleteOverlay = document.getElementById('delete-overlay');
@@ -3527,7 +4252,11 @@
     const dep = depInput.value.trim().toUpperCase();
     const arr = arrInput.value.trim().toUpperCase();
     const date = dateInput.value;
-    const options = document.getElementById('route-option').value;
+    const options = Number.parseInt(document.getElementById('route-option').value, 10);
+    if (![1, 2].includes(options)) {
+      alert('Please select a valid tracking mode.');
+      return;
+    }
 
     let firstInvalid = null;
 
@@ -3544,9 +4273,15 @@
       return;
     }
 
+    const trackButton = document.getElementById("track-btn");
+    const originalTrackLabel = trackButton.textContent;
+    trackButton.disabled = true;
+    trackButton.textContent = "Adding route…";
+    trackButton.setAttribute("aria-busy", "true");
+
     try {
       // BACKEND API CALL — add_route
-      // Expected backend: POST /add_route with { DEP, ARR, DATE }
+      // Expected backend: POST /add_route with { DEP, ARR, DATE, OPTIONS }
       const response = await fetch(`${API_BASE}/add_route`, {
         method: 'POST',
         headers: {
@@ -3573,10 +4308,181 @@
     } catch (error) {
       console.error(error);
       alert("Unable to add route.");
+    } finally {
+      trackButton.disabled = false;
+      trackButton.textContent = originalTrackLabel;
+      trackButton.removeAttribute("aria-busy");
     }
   });
 
-  window.addEventListener('load', loadRoutes);
+
+  // ---------- World / list view switching ----------
+  const worldViewTab = document.getElementById('world-view-tab');
+  const listViewTab = document.getElementById('list-view-tab');
+  const worldViewPane = document.getElementById('world-view-pane');
+  const listViewPane = document.getElementById('list-view-pane');
+  function setRouteView(view) {
+    const world = view === 'world';
+    worldViewTab.setAttribute('aria-selected', String(world));
+    listViewTab.setAttribute('aria-selected', String(!world));
+    worldViewPane.hidden = !world;
+    listViewPane.hidden = world;
+    if (world) requestAnimationFrame(() => drawGlobe());
+  }
+  worldViewTab.addEventListener('click', () => setRouteView('world'));
+  listViewTab.addEventListener('click', () => setRouteView('list'));
+
+  // ---------- Interactive route globe (no map service/API key required) ----------
+  const globeCanvas = document.getElementById('route-globe');
+  const globeCtx = globeCanvas.getContext('2d');
+  const globeList = document.getElementById('globe-route-list');
+  const globeCount = document.getElementById('globe-route-count');
+  const globeDetails = document.getElementById('globe-route-details');
+  function showGlobeRouteDetails(route) {
+    if (!route || !globeDetails) return;
+    document.getElementById('globe-detail-dep').textContent = route.DEP || '—';
+    document.getElementById('globe-detail-arr').textContent = route.ARR || '—';
+    document.getElementById('globe-detail-price').textContent = formatPrice(route.LOWEST_PRICE ?? route.CHEAPEST_PRICE);
+    const frequency = route.FREQ;
+    document.getElementById('globe-detail-frequency').textContent = frequency == null || frequency === '' ? '—' : `${frequency} / week`;
+    document.getElementById('globe-detail-date').textContent = route.DATE || 'Date unavailable';
+    globeDetails.hidden = false;
+  }
+  let globeRotation = -0.45, globeTilt = 0.12, globeZoom = 1, globeDrag = null;
+  let selectedGlobeRoute = null;
+  const airportCoords = {
+    DEL:[28.5562,77.1], BOM:[19.0896,72.8656], BLR:[13.1986,77.7066], HYD:[17.2403,78.4294], MAA:[12.9941,80.1709],
+    CCU:[22.6547,88.4467], COK:[10.152,76.4019], GOI:[15.3808,73.8314], GOX:[15.7443,73.8606], AMD:[23.0772,72.6347],
+    DXB:[25.2532,55.3657], AUH:[24.433,54.6511], SIN:[1.3644,103.9915], LHR:[51.47,-0.4543], LGW:[51.1537,-0.1821],
+    JFK:[40.6413,-73.7781], EWR:[40.6895,-74.1745], SFO:[37.6213,-122.379], LAX:[33.9416,-118.4085], ORD:[41.9742,-87.9073],
+    CDG:[49.0097,2.5479], FRA:[50.0379,8.5622], AMS:[52.3105,4.7683], IST:[41.2753,28.7519], DOH:[25.2731,51.608],
+    HKG:[22.308,113.9185], NRT:[35.772,140.3929], HND:[35.5494,139.7798], SYD:[-33.9399,151.1753], MEL:[-37.669,-144.841],
+    PER:[-31.9403,115.9672], CPT:[-33.9715,18.6021], JNB:[-26.1337,28.242], GRU:[-23.4356,-46.4731], YYZ:[43.6777,-79.6248],
+    MEX:[19.4363,-99.0721], MAD:[40.4983,-3.5676], FCO:[41.8003,12.2389], ZRH:[47.4581,8.5555], KUL:[2.7456,101.7099], BKK:[13.69,100.7501]
+  };
+  // Supplement the small built-in coordinate set with the OurAirports public airport dataset.
+  // This avoids silently omitting legitimate tracked routes just because their IATA code
+  // wasn't in the original hand-written list. Routes are only drawn when both endpoints resolve.
+  fetch('https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv')
+    .then(r => { if (!r.ok) throw new Error('Airport dataset unavailable'); return r.text(); })
+    .then(csv => {
+      const rows = csv.split(/\r?\n/);
+      const parseRow = line => { const out=[]; let value='', quoted=false; for(let i=0;i<line.length;i++){const ch=line[i]; if(ch==='"' && line[i+1]==='"' && quoted){value+='"';i++;} else if(ch==='"'){quoted=!quoted;} else if(ch===','&&!quoted){out.push(value);value='';} else value+=ch;} out.push(value); return out; };
+      const headers = parseRow(rows.shift() || '');
+      const idx = Object.fromEntries(['iata_code','latitude_deg','longitude_deg','type'].map(k=>[k,headers.indexOf(k)]));
+      rows.forEach(line => { if(!line) return; const row=parseRow(line), code=(row[idx.iata_code]||'').trim().toUpperCase(), lat=Number(row[idx.latitude_deg]), lon=Number(row[idx.longitude_deg]); if(code && /^[A-Z]{3}$/.test(code) && Number.isFinite(lat) && Number.isFinite(lon) && !airportCoords[code]) airportCoords[code]=[lat,lon]; });
+      drawGlobe();
+    }).catch(() => { /* Keep built-in airport coordinates when offline. */ });
+
+  // Stylized low-detail continent outlines in lon/lat; routes and graticules are projected on a rotatable sphere.
+  const landShapes = [
+    [[-168,70],[-140,70],[-125,55],[-110,50],[-95,50],[-82,25],[-98,8],[-112,25],[-130,48],[-155,58]],
+    [[-80,12],[-65,8],[-48,-5],[-35,-25],[-52,-55],[-70,-35],[-80,-5]],
+    [[-10,70],[30,72],[60,55],[90,60],[130,50],[160,60],[175,45],[145,30],[120,5],[105,-8],[80,8],[55,25],[35,35],[20,10],[5,5],[-10,35]],
+    [[-18,35],[10,37],[35,20],[50,-10],[30,-35],[15,-35],[-5,-5],[-15,15]],
+    [[112,-10],[155,-10],[153,-40],[115,-35]], [[-52,60],[-30,60],[-42,80],[-60,75]]
+  ];
+  let countryFeatures = [];
+  // Load the country-level world dataset so the globe shows country borders, not just continent silhouettes.
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    .then(response => { if (!response.ok) throw new Error('World country data unavailable'); return response.json(); })
+    .then(topology => {
+      if (window.topojson && topology.objects && topology.objects.countries) {
+        countryFeatures = topojson.feature(topology, topology.objects.countries).features || [];
+        drawGlobe();
+      }
+    })
+    .catch(() => { countryFeatures = []; drawGlobe(); });
+  function projectGlobe(lat, lon, cx, cy, r) {
+    const phi=lat*Math.PI/180, lam=lon*Math.PI/180+globeRotation;
+    const x=Math.cos(phi)*Math.sin(lam);
+    const y=Math.sin(phi)*Math.cos(globeTilt)-Math.cos(phi)*Math.cos(lam)*Math.sin(globeTilt);
+    const z=Math.sin(phi)*Math.sin(globeTilt)+Math.cos(phi)*Math.cos(lam)*Math.cos(globeTilt);
+    return {x:cx+r*x,y:cy-r*y,z};
+  }
+  function routeUsesPriceTracking(route) { return trackingModeLabel(route?.OPTIONS ?? route?.options ?? route?.Option).toLowerCase().includes('price'); }
+  function routeMapColor(route) { return routeUsesPriceTracking(route) ? '#4FD1A5' : '#F2A93B'; }
+  function drawGlobe() {
+    if (!globeCanvas || !globeCtx) return;
+    const rect=globeCanvas.getBoundingClientRect(), dpr=Math.min(window.devicePixelRatio||1,2);
+    if (!rect.width || !rect.height) return;
+    globeCanvas.width=Math.round(rect.width*dpr); globeCanvas.height=Math.round(rect.height*dpr);
+    globeCtx.setTransform(dpr,0,0,dpr,0,0);
+    const ctx=globeCtx,w=rect.width,h=rect.height,cx=w/2,cy=h/2,r=Math.min(w*.39,h*.43)*globeZoom;
+    ctx.clearRect(0,0,w,h);
+    const glow=ctx.createRadialGradient(cx-r*.25,cy-r*.25,r*.05,cx,cy,r*1.3);
+    glow.addColorStop(0,'#193c42'); glow.addColorStop(.72,'#0d2028'); glow.addColorStop(1,'#090e12');
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+    ctx.strokeStyle='rgba(119,184,184,.20)';ctx.lineWidth=.7;
+    for(let lat=-60;lat<=60;lat+=30){ctx.beginPath();for(let lon=-180;lon<=180;lon+=3){const p=projectGlobe(lat,lon,cx,cy,r);if(lon===-180)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);}ctx.stroke();}
+    for(let lon=-150;lon<=180;lon+=30){ctx.beginPath();for(let lat=-89;lat<=89;lat+=3){const p=projectGlobe(lat,lon,cx,cy,r);if(lat===-89)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);}ctx.stroke();}
+    if (countryFeatures.length) {
+      countryFeatures.forEach(feature => {
+        const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates : [];
+        polygons.forEach(polygon => polygon.forEach(ring => {
+          ctx.beginPath(); let started = false;
+          ring.forEach(([lon,lat]) => {
+            const pt = projectGlobe(lat, lon, cx, cy, r);
+            if (pt.z < 0) { started = false; return; }
+            if (!started) { ctx.moveTo(pt.x, pt.y); started = true; } else ctx.lineTo(pt.x, pt.y);
+          });
+          ctx.closePath(); ctx.fillStyle = 'rgba(79,209,165,.18)'; ctx.fill();
+          ctx.strokeStyle = 'rgba(125,190,180,.58)'; ctx.lineWidth = .55; ctx.stroke();
+        }));
+      });
+    } else {
+      landShapes.forEach(shape=>{ctx.beginPath();let started=false;shape.forEach(([lon,lat])=>{const p=projectGlobe(lat,lon,cx,cy,r);if(p.z<-.15){started=false;return;}if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.fillStyle='rgba(79,209,165,.19)';ctx.fill();ctx.strokeStyle='rgba(79,209,165,.45)';ctx.stroke();});
+    }
+    const coords=code=>{const c=airportCoords[code];return c?projectGlobe(c[0],c[1],cx,cy,r):null;};
+    const knownRoutes=allRoutes.map((rt,index)=>({rt,index,dep:String(rt.DEP||'').trim().toUpperCase(),arr:String(rt.ARR||'').trim().toUpperCase()})).filter(x=>airportCoords[x.dep]&&airportCoords[x.arr]);
+    const visibleRoutes=selectedGlobeRoute ? knownRoutes.filter(x=>String(x.index)===String(selectedGlobeRoute)) : knownRoutes;
+    visibleRoutes.forEach(({rt,index,dep,arr})=>{
+      const [lat1,lon1]=airportCoords[dep], [lat2,lon2]=airportCoords[arr];
+      const rad=Math.PI/180, toVec=(lat,lon)=>{lat*=rad;lon*=rad;return [Math.cos(lat)*Math.cos(lon),Math.cos(lat)*Math.sin(lon),Math.sin(lat)];};
+      const A=toVec(lat1,lon1),B=toVec(lat2,lon2), dot=Math.max(-1,Math.min(1,A[0]*B[0]+A[1]*B[1]+A[2]*B[2])), omega=Math.acos(dot), sinOmega=Math.sin(omega);
+      ctx.beginPath(); let started=false;
+      for(let step=0;step<=72;step++){
+        const t=step/72; let v;
+        if(Math.abs(sinOmega)<1e-6) v=A.map((n,k)=>n*(1-t)+B[k]*t);
+        else v=A.map((n,k)=>n*Math.sin((1-t)*omega)/sinOmega+B[k]*Math.sin(t*omega)/sinOmega);
+        const norm=Math.hypot(...v)||1; v=v.map(n=>n/norm);
+        const lat=Math.asin(v[2])/rad, lon=Math.atan2(v[1],v[0])/rad, pt=projectGlobe(lat,lon,cx,cy,r);
+        if(pt.z < 0){started=false;continue;}
+        if(!started){ctx.moveTo(pt.x,pt.y);started=true;}else ctx.lineTo(pt.x,pt.y);
+      }
+      const selected=String(index)===String(selectedGlobeRoute);
+      const routeColor=routeMapColor(rt);
+      ctx.strokeStyle=routeColor;
+      ctx.globalAlpha=selected?1:.88; ctx.lineWidth=selected?3:1.6; ctx.setLineDash(selected?[]:[4,3]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+      [coords(dep),coords(arr)].forEach(pt=>{if(!pt||pt.z<-.1)return;ctx.beginPath();ctx.arc(pt.x,pt.y,selected?4.5:3,0,Math.PI*2);ctx.fillStyle=routeColor;ctx.fill();ctx.strokeStyle='#101418';ctx.lineWidth=1;ctx.stroke();});
+    });
+    ctx.restore();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(79,209,165,.48)';ctx.lineWidth=1;ctx.stroke();
+  }
+  function updateGlobeRoutes() {
+    if(!globeList)return;
+    globeCount.textContent=allRoutes.length;
+    globeList.innerHTML=allRoutes.length?allRoutes.map((rt,index)=>`<button type="button" class="globe-route-item${String(index)===String(selectedGlobeRoute)?' selected':''}" data-globe-route="${index}" aria-pressed="${String(index)===String(selectedGlobeRoute)}"><span><span class="globe-route-codes">${escapeHtml(rt.DEP||'—')} <span style="color:var(--amber)">→</span> ${escapeHtml(rt.ARR||'—')}</span><span class="globe-route-date" style="display:block">${escapeHtml(rt.DATE||'Date unavailable')}</span></span><span class="globe-route-dot" title="Tracked" style="background:${routeMapColor(rt)};box-shadow:0 0 9px ${routeMapColor(rt)}66"></span></button>`).join(''):'<div class="globe-empty">No routes are being tracked yet. Add a route to see it here.</div>';
+    globeList.querySelectorAll('[data-globe-route]').forEach(button=>button.addEventListener('click',()=>{
+      selectedGlobeRoute=button.dataset.globeRoute;
+      globeList.querySelectorAll('[data-globe-route]').forEach(b=>{const active=b===button;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});
+      const route=allRoutes[Number(selectedGlobeRoute)];
+      showGlobeRouteDetails(route);
+      const a=airportCoords[String(route?.DEP||'').trim().toUpperCase()], b=airportCoords[String(route?.ARR||'').trim().toUpperCase()];
+      if(a&&b){const lat=(a[0]+b[0])/2, lon=(a[1]+b[1])/2;globeRotation=-lon*Math.PI/180;globeTilt=Math.max(-.8,Math.min(.8,lat*Math.PI/180));}
+      drawGlobe();
+    }));
+    drawGlobe();
+  }
+  globeCanvas.addEventListener('pointerdown',e=>{globeDrag={x:e.clientX,y:e.clientY};globeCanvas.setPointerCapture(e.pointerId);});
+  globeCanvas.addEventListener('pointermove',e=>{if(!globeDrag)return;const dx=e.clientX-globeDrag.x,dy=e.clientY-globeDrag.y;globeRotation+=dx*.008;globeTilt=Math.max(-1.1,Math.min(1.1,globeTilt+dy*.006));globeDrag={x:e.clientX,y:e.clientY};drawGlobe();});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>globeCanvas.addEventListener(ev,()=>{globeDrag=null;}));
+  globeCanvas.addEventListener('wheel',e=>{e.preventDefault();globeZoom=Math.max(.75,Math.min(1.45,globeZoom+(e.deltaY<0?.06:-.06)));drawGlobe();},{passive:false});
+  window.addEventListener('resize',drawGlobe);
+  const originalLoadRoutes = loadRoutes;
+  loadRoutes = async function(){await originalLoadRoutes();updateGlobeRoutes();};
+
+  window.addEventListener('load', () => { setRouteView('world'); loadRoutes(); });
 
   // ---------- Success modal (flight animation) ----------
   const successOverlay = document.getElementById('success-overlay');
@@ -3610,6 +4516,7 @@
   document.getElementById('success-done-btn').addEventListener('click', () => {
     closeModal(successOverlay);
   });
+
   window.addEventListener('load', loadRoutes);
 </script>
 
