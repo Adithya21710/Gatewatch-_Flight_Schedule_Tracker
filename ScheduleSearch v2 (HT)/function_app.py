@@ -1,9 +1,11 @@
 import os
 import logging
 import json
+import time
 import requests
 import tempfile
 from google import genai
+from google.genai import types
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import azure.functions as func
@@ -247,7 +249,7 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
                         margin:0;
                         padding:0;
                         background-color:#1B1E20;
-                        font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                        font-family: 'Trebuchet MS', Arial, sans-serif;
                     ">
 
                     <table role="presentation"
@@ -313,7 +315,7 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
                                             style="
                                                 padding:5px 30px 0;
                                                 color:#4FD1A5;
-                                                font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                                 font-size:34px;
                                                 font-weight:600;
                                             ">
@@ -327,7 +329,7 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
                                             style="
                                                 padding:14px 30px 0;
                                                 color:#E8E6E1;
-                                                font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                                 font-size:18px;
                                                 font-weight:400;
                                             ">
@@ -341,7 +343,7 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
                                             style="
                                                 padding:32px 45px 44px;
                                                 color:#8B9094;
-                                                font-family:'IBM Plex Sans', Arial, Helvetica, sans-serif;
+                                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                                 font-size:14px;
                                                 line-height:1.6;
                                             ">
@@ -368,59 +370,108 @@ def add_email(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="voice_text", methods=['POST'])
 def voice_text(req: func.HttpRequest) -> func.HttpResponse:
 
+    audio_path = None
     client = genai.Client(api_key=os.environ["Gemini_API"])
     audio_file = req.get_body()
-
     with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as temp_audio:
         temp_audio.write(audio_file)
         audio_path = temp_audio.name
+        audio_file = client.files.upload(file=audio_path,config=types.UploadFileConfig(mime_type="audio/webm"))
 
-    audio_file = client.files.upload(file=audio_path)
-    interaction = client.interactions.create(model="gemini-3.5-transcribe",
-    input=[
-        {
-            "type": "audio",
-            "uri": audio_file.uri,
-            "mime_type": audio_file.mime_type,
-        }
-    ],
-    )
-    spoken_text = interaction.output_text
-    os.remove(audio_path)
-    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+        max_wait_seconds = 60
+        waited_seconds = 0
 
-    rules=f"""
-            Today's date is {today.isoformat()}
-            Extract the departure city, arrival city and travel date
-            from the following speech:
+        while waited_seconds < max_wait_seconds:
+            if audio_file.state and audio_file.state.name == "ACTIVE":
+                break
 
-            {spoken_text}
-            Return ONLY a JSON object with these exact fields:
-            {{
-                "DEP": "<IATA code or empty string>",
-                "ARR": "<IATA code or empty string>",
-                "DATE": "<YYYY-MM-DD or empty string>"
-            }}
-            
-            Rules:
-            - Convert city names to IATA airport codes (Mumbai=BOM, Delhi=DEL, Dubai=DXB, London=LHR, Singapore=SIN, etc.)
-            - "next month" means the 1st of next month
-            - "next week" means 7 days from today
-            - "in 2 weeks" means 14 days from today
-            - If something cannot be determined, use empty string
-            - Return ONLY the JSON, no explanation
+            if audio_file.state and audio_file.state.name == "FAILED":
+                raise RuntimeError(f"Gemini audio processing failed: {audio_file.state}")
 
-            Example:
-            {{
-            "DEP": "BLR",
-            "ARR": "DXB",
-            "DATE": "2026-12-11"
-            }}
-            """
+            time.sleep(2)
+            waited_seconds += 2
 
-    response = client.models.generate_content(model="gemini-2.0-flash",contents=rules)
+            audio_file = client.files.get(name=audio_file.name)
 
-    route_data = json.loads(response.text)
+        if not audio_file.state or audio_file.state.name != "ACTIVE":
+            raise TimeoutError("Gemini audio file did not become ACTIVE within 60 seconds")
+
+        logging.info("Gemini audio file is ACTIVE")
+
+        interaction = client.interactions.create(model="gemini-3.5-transcribe",
+        input=[
+            {
+                "type": "audio",
+                "uri": audio_file.uri,
+                "mime_type": audio_file.mime_type,
+            }
+        ],
+        )
+        spoken_text = interaction.output_text
+
+        today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
+        rules=f"""
+                Today's date is {today.isoformat()}
+                Interpret relative dates using this date.
+                - "next month" means the first day of the next calendar month.
+                - "next week" means 7 days from today.
+                - "in 2 weeks" means 14 days from today.
+                - Explicit dates such as "1st January 2027" must be returned as "2027-01-01"
+                Extract the departure city, arrival city and travel date
+                from the following speech:
+
+                {spoken_text}
+                Return ONLY a JSON object with these exact fields:
+                {{
+                    "DEP": "<IATA code or empty string>",
+                    "ARR": "<IATA code or empty string>",
+                    "DATE": "<YYYY-MM-DD or empty string>"
+                }}
+                
+                Rules:
+                - Convert city names to IATA airport codes (Mumbai=BOM, Delhi=DEL, Dubai=DXB, London=LHR, Singapore=SIN, etc.)
+                - "next month" means the 1st of next month
+                - "next week" means 7 days from today
+                - "in 2 weeks" means 14 days from today
+                - If something cannot be determined, use empty string
+                - Return ONLY the JSON, no explanation
+
+                Example:
+                {{
+                "DEP": "BLR",
+                "ARR": "DXB",
+                "DATE": "2026-12-11"
+                }}
+                """
+        
+        response = client.models.generate_content(model="gemini-3.1-flash-lite",contents=rules)
+        result_text = (response.text or "").strip()
+
+        # Log Gemini's response to Azure logs
+        logging.info("Gemini extraction response: %s", result_text)
+
+        # Remove Markdown code fences if Gemini returns them
+        if result_text.startswith("```"):
+            lines = result_text.splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            result_text = "\n".join(lines).strip()
+
+        try:
+            route_data = json.loads(result_text)
+        except json.JSONDecodeError:
+            logging.exception("Gemini returned invalid JSON")
+            return func.HttpResponse(
+                json.dumps({"error": "Gemini returned invalid JSON"}),
+                mimetype="application/json",
+                status_code=500
+            )
+
+        client.files.delete(name=audio_file.name)
+        os.remove(audio_path)
 
     return func.HttpResponse(json.dumps(route_data),mimetype="application/json",status_code=200,)
 
@@ -553,7 +604,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                     margin:0;
                     padding:25px 10px;
                     background:#ffffff;
-                    font-family:Arial,Helvetica,sans-serif;
+                    font-family: 'Trebuchet MS', Arial, sans-serif;
                 ">
 
                 <table width="100%" cellpadding="0" cellspacing="0"
@@ -580,7 +631,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
 
                             <td style="padding-left:14px;">
                                 <div style="
-                                    font-family:'Courier New',monospace;
+                                    font-family: 'Trebuchet MS', Arial, sans-serif;
                                     font-size:10px;
                                     color:#4FD1A5;
                                     letter-spacing:.12em;
@@ -611,7 +662,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                         <tr>
                             <td style="
                                 padding-top:14px;
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:10px;
                                 color:#8B9094;
                             ">
@@ -621,7 +672,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                             <td align="right"
                                 style="
                                     padding-top:14px;
-                                    font-family:'Courier New',monospace;
+                                    font-family: 'Trebuchet MS', Arial, sans-serif;
                                     font-size:15px;
                                     color:#E8E6E1;
                                 ">
@@ -632,7 +683,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                         <tr>
                             <td style="
                                 padding-top:10px;
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:10px;
                                 color:#8B9094;
                             ">
@@ -642,7 +693,7 @@ def add_route(req: func.HttpRequest) -> func.HttpResponse:
                             <td align="right"
                                 style="
                                     padding-top:10px;
-                                    font-family:'Courier New',monospace;
+                                    font-family: 'Trebuchet MS', Arial, sans-serif;
                                     font-size:13px;
                                     color:#E8E6E1;
                                 ">
@@ -711,7 +762,7 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
                     margin:0;
                     padding:25px 10px;
                     background:#ffffff;
-                    font-family:Arial,Helvetica,sans-serif;
+                    font-family: 'Trebuchet MS', Arial, sans-serif;
                 ">
 
                 <table width="100%" cellpadding="0" cellspacing="0"
@@ -738,7 +789,7 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
 
                             <td style="padding-left:14px;">
                                 <div style="
-                                    font-family:'Courier New',monospace;
+                                    font-family: 'Trebuchet MS', Arial, sans-serif;
                                     font-size:10px;
                                     color:#E1554F;
                                     letter-spacing:.12em;
@@ -769,7 +820,7 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
                         <tr>
                             <td style="
                                 padding-top:14px;
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:10px;
                                 color:#8B9094;
                             ">
@@ -779,7 +830,7 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
                             <td align="right"
                                 style="
                                     padding-top:14px;
-                                    font-family:'Courier New',monospace;
+                                    font-family: 'Trebuchet MS', Arial, sans-serif;
                                     font-size:15px;
                                     color:#E8E6E1;
                                 ">
@@ -790,7 +841,7 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
                         <tr>
                             <td style="
                                 padding-top:10px;
-                                font-family:'Courier New',monospace;
+                                font-family: 'Trebuchet MS', Arial, sans-serif;
                                 font-size:10px;
                                 color:#8B9094;
                             ">
@@ -800,7 +851,7 @@ def delete_route(req: func.HttpRequest) -> func.HttpResponse:
                             <td align="right"
                                 style="
                                     padding-top:10px;
-                                    font-family:'Courier New',monospace;
+                                    font-family: 'Trebuchet MS', Arial, sans-serif;
                                     font-size:13px;
                                     color:#E8E6E1;
                                 ">
