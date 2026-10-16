@@ -4383,16 +4383,26 @@
     [[112,-10],[155,-10],[153,-40],[115,-35]], [[-52,60],[-30,60],[-42,80],[-60,75]]
   ];
   let countryFeatures = [];
-  // Load the country-level world dataset so the globe shows country borders, not just continent silhouettes.
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-    .then(response => { if (!response.ok) throw new Error('World country data unavailable'); return response.json(); })
-    .then(topology => {
-      if (window.topojson && topology.objects && topology.objects.countries) {
-        countryFeatures = topojson.feature(topology, topology.objects.countries).features || [];
+  // Load the India-aligned world boundary GeoJSON from the Frontend folder.
+  // Keep world_map_india_compressed.geojson alongside index.html.
+  fetch('./world_map_india_compressed.geojson')
+    .then(response => {
+      if (!response.ok) throw new Error('India-aligned world map data unavailable');
+      return response.json();
+    })
+    .then(geojson => {
+      if (geojson && geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+        countryFeatures = geojson.features;
         drawGlobe();
+      } else {
+        throw new Error('Invalid GeoJSON FeatureCollection');
       }
     })
-    .catch(() => { countryFeatures = []; drawGlobe(); });
+    .catch(error => {
+      console.error('Failed to load India-aligned world map:', error);
+      countryFeatures = [];
+      drawGlobe();
+    });
   function projectGlobe(lat, lon, cx, cy, r) {
     const phi=lat*Math.PI/180, lam=lon*Math.PI/180+globeRotation;
     const x=Math.cos(phi)*Math.sin(lam);
