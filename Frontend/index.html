@@ -2398,6 +2398,20 @@
   .globe-counter span { color:var(--text-dim); font:9px var(--mono); letter-spacing:.12em; }
   .globe-layout { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(200px,.8fr); gap:16px; align-items:stretch; }
   .globe-stage { position:relative; min-height:310px; overflow:hidden; border:1px solid rgba(79,209,165,.15); border-radius:5px; background:radial-gradient(ellipse at 50% 48%,rgba(32,70,68,.26),#0c1115 72%); }
+  .globe-map-loading {
+    position:absolute; inset:0; z-index:4; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:12px; padding:20px;
+    background:rgba(9,14,18,.94); color:var(--text-dim); text-align:center;
+    font:11px var(--mono); letter-spacing:.06em;
+  }
+  .globe-map-loading[hidden] { display:none !important; }
+  .globe-map-spinner {
+    width:27px; height:27px; border:2px solid rgba(79,209,165,.18);
+    border-top-color:var(--teal); border-radius:50%; animation:globe-spin .8s linear infinite;
+  }
+  .globe-map-loading.error .globe-map-spinner { display:none; }
+  @keyframes globe-spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .globe-map-spinner { animation:none; border-color:var(--teal); } }
   #globe-route-details { position:absolute; right:12px; bottom:12px; z-index:5; width:min(270px,calc(100% - 24px)); padding:12px 14px; border:1px solid rgba(79,209,165,.4); border-radius:5px; background:rgba(13,18,21,.94); box-shadow:0 8px 24px rgba(0,0,0,.35); backdrop-filter:blur(8px); }
   #globe-route-details[hidden] { display:none !important; }
   .globe-detail-route { color:var(--text); font:600 14px var(--mono); margin-bottom:9px; }
@@ -2617,7 +2631,7 @@
         <div class="globe-counter"><strong id="globe-route-count">0</strong><span>ROUTES</span></div>
       </div>
       <div class="globe-layout">
-        <div class="globe-stage"><canvas id="route-globe" aria-label="Interactive globe showing tracked flight routes" role="img"></canvas><div class="globe-hint">↔ DRAG TO ROTATE · SCROLL TO ZOOM</div><div id="globe-route-details" hidden aria-live="polite"><div class="globe-detail-route"><span id="globe-detail-dep"></span><span class="globe-detail-arrow">→</span><span id="globe-detail-arr"></span></div><div class="globe-detail-metrics"><div><span class="globe-detail-label">Lowest price</span><strong class="globe-detail-value" id="globe-detail-price">—</strong></div><div><span class="globe-detail-label">Frequency</span><strong class="globe-detail-value globe-detail-frequency" id="globe-detail-frequency">—</strong></div></div><div class="globe-route-date" id="globe-detail-date"></div></div></div>
+        <div class="globe-stage"><canvas id="route-globe" aria-label="Interactive globe showing tracked flight routes" role="img"></canvas><div id="globe-map-loading" class="globe-map-loading" role="status" aria-live="polite"><span class="globe-map-spinner" aria-hidden="true"></span><span id="globe-map-loading-text">Loading world map…</span></div><div class="globe-hint">↔ DRAG TO ROTATE · SCROLL TO ZOOM</div><div id="globe-route-details" hidden aria-live="polite"><div class="globe-detail-route"><span id="globe-detail-dep"></span><span class="globe-detail-arrow">→</span><span id="globe-detail-arr"></span></div><div class="globe-detail-metrics"><div><span class="globe-detail-label">Lowest price</span><strong class="globe-detail-value" id="globe-detail-price">—</strong></div><div><span class="globe-detail-label">Frequency</span><strong class="globe-detail-value globe-detail-frequency" id="globe-detail-frequency">—</strong></div></div><div class="globe-route-date" id="globe-detail-date"></div></div></div>
         <div class="globe-route-panel"><div class="globe-route-panel-title">LIVE ROUTE INDEX</div><div id="globe-route-list"><div class="globe-empty">Loading tracked routes…</div></div></div>
       </div>
       <div class="globe-legend" aria-label="Route color legend"><span><i class="legend-price"></i>New flights + price changes</span><span><i class="legend-new"></i>New flights only</span></div>
@@ -4374,35 +4388,63 @@
       drawGlobe();
     }).catch(() => { /* Keep built-in airport coordinates when offline. */ });
 
-  // Stylized low-detail continent outlines in lon/lat; routes and graticules are projected on a rotatable sphere.
-  const landShapes = [
-    [[-168,70],[-140,70],[-125,55],[-110,50],[-95,50],[-82,25],[-98,8],[-112,25],[-130,48],[-155,58]],
-    [[-80,12],[-65,8],[-48,-5],[-35,-25],[-52,-55],[-70,-35],[-80,-5]],
-    [[-10,70],[30,72],[60,55],[90,60],[130,50],[160,60],[175,45],[145,30],[120,5],[105,-8],[80,8],[55,25],[35,35],[20,10],[5,5],[-10,35]],
-    [[-18,35],[10,37],[35,20],[50,-10],[30,-35],[15,-35],[-5,-5],[-15,15]],
-    [[112,-10],[155,-10],[153,-40],[115,-35]], [[-52,60],[-30,60],[-42,80],[-60,75]]
-  ];
   let countryFeatures = [];
-  // Load the India-aligned world boundary GeoJSON from the Frontend folder.
-  // Keep world_map_india_compressed.geojson alongside index.html.
-  fetch('./world_map_india_compressed.geojson')
-    .then(response => {
-      if (!response.ok) throw new Error('India-aligned world map data unavailable');
-      return response.json();
-    })
-    .then(geojson => {
-      if (geojson && geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
-        countryFeatures = geojson.features;
-        drawGlobe();
-      } else {
+  const globeMapLoading = document.getElementById('globe-map-loading');
+  const globeMapLoadingText = document.getElementById('globe-map-loading-text');
+  const WORLD_MAP_URL = new URL('./world_map_india_compressed.geojson', window.location.href).href;
+  const WORLD_MAP_CACHE = 'gatewatch-world-map-v1';
+
+  function setGlobeMapLoading(message, isError = false) {
+    if (!globeMapLoading || !globeMapLoadingText) return;
+    globeMapLoadingText.textContent = message;
+    globeMapLoading.classList.toggle('error', isError);
+    globeMapLoading.hidden = false;
+  }
+
+  async function getWorldMapResponse() {
+    // Cache Storage avoids downloading the large GeoJSON on every visit.
+    // The versioned cache name can be incremented when the map file changes.
+    if ('caches' in window) {
+      try {
+        const cache = await caches.open(WORLD_MAP_CACHE);
+        const cachedResponse = await cache.match(WORLD_MAP_URL);
+        if (cachedResponse) return cachedResponse;
+        const response = await fetch(WORLD_MAP_URL);
+        if (!response.ok) throw new Error(`World map request failed (${response.status})`);
+        // A cache quota/permission failure should not prevent the map from loading.
+        try { await cache.put(WORLD_MAP_URL, response.clone()); }
+        catch (cacheError) { console.warn('World map loaded but could not be cached:', cacheError); }
+        return response;
+      } catch (cacheError) {
+        // If Cache Storage itself is unavailable, continue with normal browser caching.
+        if (cacheError instanceof TypeError || !navigator.onLine) throw cacheError;
+        console.warn('World map cache unavailable; using browser cache:', cacheError);
+      }
+    }
+    const response = await fetch(WORLD_MAP_URL, { cache: 'force-cache' });
+    if (!response.ok) throw new Error(`World map request failed (${response.status})`);
+    return response;
+  }
+
+  async function loadWorldMap() {
+    setGlobeMapLoading('Loading world map…');
+    try {
+      const response = await getWorldMapResponse();
+      const geojson = await response.json();
+      if (!geojson || geojson.type !== 'FeatureCollection' || !Array.isArray(geojson.features)) {
         throw new Error('Invalid GeoJSON FeatureCollection');
       }
-    })
-    .catch(error => {
-      console.error('Failed to load India-aligned world map:', error);
-      countryFeatures = [];
+      countryFeatures = geojson.features.filter(feature => feature && feature.geometry &&
+        (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'));
+      if (!countryFeatures.length) throw new Error('The GeoJSON contains no drawable country features');
       drawGlobe();
-    });
+      if (globeMapLoading) globeMapLoading.hidden = true;
+    } catch (error) {
+      console.error('Failed to load India-aligned world map:', error);
+      setGlobeMapLoading('World map unavailable. Check that the GeoJSON file is beside index.html, then refresh.', true);
+    }
+  }
+  loadWorldMap();
   function projectGlobe(lat, lon, cx, cy, r) {
     const phi=lat*Math.PI/180, lam=lon*Math.PI/180+globeRotation;
     const x=Math.cos(phi)*Math.sin(lam);
@@ -4441,8 +4483,6 @@
           ctx.strokeStyle = 'rgba(125,190,180,.58)'; ctx.lineWidth = .55; ctx.stroke();
         }));
       });
-    } else {
-      landShapes.forEach(shape=>{ctx.beginPath();let started=false;shape.forEach(([lon,lat])=>{const p=projectGlobe(lat,lon,cx,cy,r);if(p.z<-.15){started=false;return;}if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.fillStyle='rgba(79,209,165,.19)';ctx.fill();ctx.strokeStyle='rgba(79,209,165,.45)';ctx.stroke();});
     }
     const coords=code=>{const c=airportCoords[code];return c?projectGlobe(c[0],c[1],cx,cy,r):null;};
     const knownRoutes=allRoutes.map((rt,index)=>({rt,index,dep:String(rt.DEP||'').trim().toUpperCase(),arr:String(rt.ARR||'').trim().toUpperCase()})).filter(x=>airportCoords[x.dep]&&airportCoords[x.arr]);
